@@ -1,8 +1,8 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
 
@@ -27,6 +27,7 @@ pub fn render(
     dense: bool,
     show_orrery: bool,
     show_names: bool,
+    paused: bool,
 ) {
     let area = frame.area();
 
@@ -37,6 +38,10 @@ pub fn render(
 
     render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names);
     render_hud(frame, chunks[1], world);
+
+    if paused {
+        render_pause_overlay(frame, area);
+    }
 }
 
 fn render_viewport(
@@ -167,6 +172,37 @@ fn render_colored_layers(frame: &mut Frame, area: Rect, layers: &[(&BrailleCanva
     frame.render_widget(Paragraph::new(lines), area);
 }
 
+fn render_pause_overlay(frame: &mut Frame, area: Rect) {
+    const W: u16 = 24;
+    const H: u16 = 5;
+    let x = area.x + area.width.saturating_sub(W) / 2;
+    let y = area.y + area.height.saturating_sub(H) / 2;
+    let popup = Rect { x, y, width: W, height: H };
+
+    frame.render_widget(Clear, popup);
+    frame.render_widget(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Yellow))
+            .title(" Paused "),
+        popup,
+    );
+
+    let inner = Rect { x: x + 1, y: y + 1, width: W - 2, height: H - 2 };
+    let lines = vec![
+        Line::from(Span::styled(
+            "  II  PAUSED  II  ",
+            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+        )),
+        Line::from(""),
+        Line::from(Span::styled(
+            "   [P] to resume  ",
+            Style::default().fg(Color::DarkGray),
+        )),
+    ];
+    frame.render_widget(Paragraph::new(lines), inner);
+}
+
 fn render_hud(frame: &mut Frame, area: Rect, world: &World) {
     // Split HUD: radar on left (~23 cols), stats on right.
     let radar_width = 23u16;
@@ -246,7 +282,7 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World) {
     let msg = if !world.message.text.is_empty() {
         world.message.text.lines().next().unwrap_or("").to_string()
     } else {
-        format!(" {}  [WASD/IJKL fly  SPC fire  O orrery  N names  Q quit]", world.mission_file)
+        format!(" {}  [WASD/IJKL fly  SPC fire  P pause  O orrery  N names  Q quit]", world.mission_file)
     };
     lines.push(Line::from(msg));
 

@@ -66,6 +66,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
     let mut dense_stars = prefs.dense_stars;
     let mut show_orrery = false;
     let mut show_names = false;
+    let mut paused = false;
     let mut input = InputState::default();
     let mut last_tick = Instant::now();
     let mut screen = Screen::Title(0);
@@ -81,7 +82,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
             Screen::Title(sel) => render_title(frame, *sel, &saves_cache),
             Screen::Briefing { scores } => briefing::render(frame, &world, scores),
             Screen::Playing => {
-                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names)
+                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names, paused)
             }
             Screen::LoadMenu { slots, sel } => render_load_menu(frame, slots, *sel),
         })?;
@@ -122,7 +123,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 }
 
                 Screen::Playing => {
-                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names)? {
+                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut paused)? {
                         // Q — save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
@@ -131,7 +132,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                     }
                     while event::poll(Duration::ZERO)? {
                         let ev2 = event::read()?;
-                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names)?;
+                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut paused)?;
                     }
                 }
 
@@ -148,8 +149,8 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
             }
         }
 
-        // ── Game tick (Playing only) ───────────────────────────────────────────
-        if matches!(screen, Screen::Playing) && last_tick.elapsed() >= FRAME {
+        // ── Game tick (Playing only, not when paused) ─────────────────────────
+        if matches!(screen, Screen::Playing) && !paused && last_tick.elapsed() >= FRAME {
             let dt = world.delta_t;
 
             if input.fire {
@@ -296,10 +297,20 @@ fn handle_playing_event(
     dense_stars: &mut bool,
     show_orrery: &mut bool,
     show_names: &mut bool,
+    paused: &mut bool,
 ) -> io::Result<bool> {
     if let Event::Key(KeyEvent { code, modifiers, .. }) = ev {
         if modifiers.contains(KeyModifiers::CONTROL) && code == KeyCode::Char('c') {
             return Err(io::Error::new(io::ErrorKind::Interrupted, "ctrl-c"));
+        }
+        // P always toggles pause regardless of current state.
+        if code == KeyCode::Char('p') {
+            *paused = !*paused;
+            return Ok(false);
+        }
+        // Ignore all other gameplay keys while paused.
+        if *paused {
+            return Ok(false);
         }
         match code {
             KeyCode::Char('q') | KeyCode::Esc => return Ok(true),
