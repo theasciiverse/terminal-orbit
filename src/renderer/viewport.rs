@@ -23,6 +23,32 @@ pub fn draw_scene(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
     draw_booms(canvas, camera, world);
 }
 
+/// Draw only enemy (non-friendly) ships.
+pub fn draw_enemy_ships(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
+    for target in &world.targets {
+        if target.age > 0.0 && !target.hidden && !target.invisible && !target.friendly {
+            if let Some(midx) = target.model {
+                if midx < world.models.len() {
+                    draw_target_ship(canvas, camera, target, &world.models[midx]);
+                }
+            }
+        }
+    }
+}
+
+/// Draw only friendly ships.
+pub fn draw_friendly_ships(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
+    for target in &world.targets {
+        if target.age > 0.0 && !target.hidden && !target.invisible && target.friendly {
+            if let Some(midx) = target.model {
+                if midx < world.models.len() {
+                    draw_target_ship(canvas, camera, target, &world.models[midx]);
+                }
+            }
+        }
+    }
+}
+
 /// Draw a wireframe ship model at the target's position/orientation.
 /// Model axes: +X → target.view, +Y → target.right, +Z → target.up  (mirrors LookAt in orbit.c)
 pub fn draw_target_ship(canvas: &mut BrailleCanvas, camera: &Camera, target: &Target, model: &Model) {

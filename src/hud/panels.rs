@@ -11,7 +11,7 @@ use crate::renderer::{
     canvas::BrailleCanvas,
     projection::Camera,
     stars::draw_stars,
-    viewport::{draw_junk, draw_scene},
+    viewport::{draw_enemy_ships, draw_friendly_ships, draw_junk},
 };
 use crate::types::World;
 use crate::ui::console::active_lines;
@@ -23,7 +23,7 @@ const HUD_HEIGHT: u16 = 12;
 pub fn render(
     frame: &mut Frame,
     world: &World,
-    stars: &[Vec3],
+    stars: &[(Vec3, f32)],
     dense: bool,
     show_orrery: bool,
     show_names: bool,
@@ -43,7 +43,7 @@ fn render_viewport(
     frame: &mut Frame,
     area: Rect,
     world: &World,
-    stars: &[Vec3],
+    stars: &[(Vec3, f32)],
     dense: bool,
     show_orrery: bool,
     show_names: bool,
@@ -60,19 +60,111 @@ fn render_viewport(
     }
 
     let camera = Camera::from_player(&world.player, w_dots, h_dots);
-    let mut canvas = BrailleCanvas::new(w_dots, h_dots);
-    draw_stars(&mut canvas, &camera, stars, dense);
-    draw_scene(&mut canvas, &camera, world);
-    draw_junk(&mut canvas, &camera, world.player.vel, world.abs_t);
 
-    let lines: Vec<Line> = canvas.rows().into_iter().map(Line::from).collect();
-    frame.render_widget(Paragraph::new(lines), area);
+    let mut c_stars    = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_junk     = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_planets  = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_friendly = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_enemy    = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_fx       = BrailleCanvas::new(w_dots, h_dots);
+
+    draw_stars(&mut c_stars, &camera, stars, dense);
+    draw_junk(&mut c_junk, &camera, world.player.vel, world.abs_t);
+    crate::renderer::planets::draw_planets(&mut c_planets, &camera, world);
+    draw_friendly_ships(&mut c_friendly, &camera, world);
+    draw_enemy_ships(&mut c_enemy, &camera, world);
+    crate::combat::explosions::draw_missiles(&mut c_fx, &camera, world);
+    crate::combat::explosions::draw_booms(&mut c_fx, &camera, world);
+
+    let layers: &[(&BrailleCanvas, Color)] = &[
+        (&c_stars,    Color::White),
+        (&c_junk,     Color::DarkGray),
+        (&c_planets,  Color::Cyan),
+        (&c_friendly, Color::Green),
+        (&c_enemy,    Color::Red),
+        (&c_fx,       Color::Yellow),
+    ];
+    render_colored_layers(frame, area, layers);
 
     render_console_overlay(frame, area, world);
 
     if show_names {
         render_3d_name_overlays(frame, area, world, &camera);
     }
+}
+
+/// Merge multiple braille canvas layers into a single colored paragraph.
+/// Layers are ordered lowest to highest priority; when multiple layers have dots
+/// in the same cell, their bits are OR'd together and the highest-priority layer's
+/// color wins.
+fn render_colored_layers(frame: &mut Frame, area: Rect, layers: &[(&BrailleCanvas, Color)]) {
+    // Collect rows from each layer up front.
+    let layer_rows: Vec<Vec<String>> = layers.iter().map(|(c, _)| c.rows()).collect();
+
+    let row_count = layer_rows.first().map(|r| r.len()).unwrap_or(0);
+
+    let mut lines: Vec<Line> = Vec::with_capacity(row_count);
+
+    for row_idx in 0..row_count {
+        // Build a flat list of (char_as_u32, color) for every column in this row.
+        let col_count = layer_rows
+            .first()
+            .and_then(|r| r.get(row_idx))
+            .map(|s| s.chars().count())
+            .unwrap_or(0);
+
+        // For each terminal cell, compute merged braille bits and winning color.
+        let mut cells: Vec<(char, Color)> = Vec::with_capacity(col_count);
+
+        for col_idx in 0..col_count {
+            let mut merged_bits: u32 = 0;
+            let mut cell_color = Color::Reset;
+
+            for (li, (_, layer_color)) in layers.iter().enumerate() {
+                if let Some(row_str) = layer_rows.get(li).and_then(|r| r.get(row_idx)) {
+                    if let Some(ch) = row_str.chars().nth(col_idx) {
+                        let code = ch as u32;
+                        if code >= 0x2800 && code <= 0x28FF {
+                            let bits = code - 0x2800;
+                            if bits > 0 {
+                                merged_bits |= bits;
+                                cell_color = *layer_color;
+                            }
+                        }
+                    }
+                }
+            }
+
+            let out_char = if merged_bits > 0 {
+                char::from_u32(0x2800 + merged_bits).unwrap_or('⠀')
+            } else {
+                ' '
+            };
+            cells.push((out_char, cell_color));
+        }
+
+        // Run-length encode into Spans grouped by color.
+        let mut spans: Vec<Span<'static>> = Vec::new();
+        let mut run_start = 0;
+        while run_start < cells.len() {
+            let run_color = cells[run_start].1;
+            let mut run_end = run_start + 1;
+            while run_end < cells.len() && cells[run_end].1 == run_color {
+                run_end += 1;
+            }
+            let text: String = cells[run_start..run_end].iter().map(|(c, _)| *c).collect();
+            if run_color == Color::Reset {
+                spans.push(Span::raw(text));
+            } else {
+                spans.push(Span::styled(text, Style::default().fg(run_color)));
+            }
+            run_start = run_end;
+        }
+
+        lines.push(Line::from(spans));
+    }
+
+    frame.render_widget(Paragraph::new(lines), area);
 }
 
 fn render_hud(frame: &mut Frame, area: Rect, world: &World) {

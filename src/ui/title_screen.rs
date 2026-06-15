@@ -21,7 +21,7 @@ const ORBIT_ART: &str = r#"   ___  ____  ____  ___  ____
  | |_| |  _ <| |_) || |   | |
   \___/|_| \_|____/|___|  |_|"#;
 
-const SUBTITLE: &str = "   Space Combat Simulator\n   (C) 1999 Steve Belczyk";
+const SUBTITLE: &str = "Space Combat Simulator — lovingly translated to TUI\n  Originally by Steve Belczyk (1999)";
 
 pub const TITLE_OPTIONS: &[&str] = &["New Game", "Load Game", "Quit"];
 
@@ -44,7 +44,7 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
 
     let outer = Block::default()
         .borders(Borders::ALL)
-        .title(" ORBIT — Terminal Edition ");
+        .title(" Terminal Orbit ");
     let inner = outer.inner(area);
     frame.render_widget(outer, area);
 
