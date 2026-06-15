@@ -2,7 +2,6 @@
  *  Training mission #02
  */
 
-/* Verbose reporting from the mission loader */
 Verbose
 
 Cursor
@@ -10,21 +9,15 @@ Cursor
 	Earth -15000
 }
 
-/* Put player here */
-/* Player { }	*/
-
 Briefing
 {
-	Training Mission #02:  Warp Factor Nine\\
-	This training mission will teach you to use your high-speed
-	engines.\\
-	Your mission is to travel to the planet Mars and then
-	return to Earth.\\
-	Just relax and follow the instructions which will appear
-	on the screen.\\
-	Briefing concluded.\\
-	You may press 'M' to remove this message from your screen.\\
-	Press 'B' at any time to see this briefing again.
+	Training Mission #02: Long Haul\\
+	This mission will teach you interplanetary navigation.\\
+	Your mission is to travel to the planet Mars and return
+	to Earth.\\
+	Follow the instructions on screen.\\
+	Press 'M' at any time to recall the last instruction.\\
+	Briefing concluded.
 }
 
 Event
@@ -36,13 +29,11 @@ Event
 	Action Message
 	Value
 	{
-		Be sure planet names are displayed:  Press 'n' if
-		they aren't.\\
-		Point your ship toward the planet Mars.\\
-		There's a chance Mars appears close to or behind
-		the Sun (Sol), so it might be tricky to find.\\
-		Then hold 'A' to accelerate toward Mars.\\
-		Increase speed to about 10000 kps.
+		Press 'N' to show planet names if they are hidden.\\
+		Point your ship toward Mars using A/D to yaw
+		and I/K to pitch.\\
+		Then hold W to accelerate.\\
+		Build up as much speed as you can.
 	}
 }
 
@@ -56,14 +47,12 @@ Event
 	Action Message
 	Value
 	{
-		Interplanetary distances are so great that
-		you'll never get to another planet just using
-		your low-speed thrusters.\\
-		Keep the ship pointed toward Mars, and engage
-		your high-speed engines by pressing shift-A.\\
-		Keep shift-A pressed until your velocity reaches
-		about a million kilometers per second, or you
-		are getting close to Mars.
+		Interplanetary distances are vast.\\
+		Press X to toggle your warp engines for much
+		greater acceleration.\\
+		Keep your nose pointed at Mars and hold W.\\
+		When you are halfway there, flip around
+		and hold S to brake so you arrive slowly.
 	}
 
 	Action Disable
@@ -81,7 +70,7 @@ Event
 	Value
 	{
 		You are approaching Mars.\\
-		Be prepared to stop by using the SPACE key.
+		Turn your ship around and hold S to brake.
 	}
 }
 
@@ -93,12 +82,9 @@ Event
 	Action Message
 	Value
 	{
-		You have reached Mars.  You have accomplished your
-		first mission objective.\\
-		Now turn your ship around and head back to Earth.\\
-		You will again need to use your high-speed engines
-		by using shift-A, or you'll never get there in this
-		lifetime.
+		You have reached Mars — first objective complete!\\
+		Now turn around and head back to Earth.\\
+		Point at Earth with A/D and I/K, then thrust with W.
 	}
 
 	Action Enable
@@ -118,13 +104,10 @@ Event
 	Action Message
 	Value
 	{
-		You did it!  Now you know how to maneuver using
-		low-speed engines, which are good for close combat
-		and moving around a single planetary system, and
-		using your high-speed engines, which are necessary
-		for interplanetary space flights.\\
-		Wait a few seconds for the next
-		training mission to begin.
+		Excellent!  You can now navigate between planets.\\
+		The key to interplanetary flight is patience:
+		thrust hard with W, coast, then brake with S.\\
+		Stand by for the next training mission.
 	}
 
 	Action Enable
@@ -144,5 +127,3 @@ Event
 	Action LoadMission
 	Value train03.msn
 }
-
-

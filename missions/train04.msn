@@ -2,15 +2,12 @@
  *  Training mission #04
  */
 
-/* Verbose reporting from the mission loader */
 Verbose
 
 Cursor
 {
 	Earth -15000
 }
-
-/* Put player here */
 
 Player { }
 
@@ -59,13 +56,13 @@ Object
 
 Briefing
 {
-	Training Mission #04:  Deadly Ducks\\
-	There are four enemy targets nearby.  This time they are
-	armed and will fire upon you if you approach them.\\
-	Your mission is to destroy all four targets.
+	Training Mission #04: Deadly Ducks\\
+	There are four enemy platforms nearby.  This time they
+	are armed and will fire upon you if you get close.\\
+	Your mission is to destroy all four targets.\\
+	Press 'M' at any time to recall the last instruction.
 }
 
-/* Disable usage message if they beat us to the punch */
 Event
 {
 	Trigger Score
@@ -84,8 +81,13 @@ Event
 	Action Message
 	Value
 	{
-		The 'u' key locks the closest enemy target.\\
-		The 'y' key cycles through visible enemy targets.
+		Four armed platforms are nearby.\\
+		Press U to lock the nearest enemy.\\
+		Press Y to cycle through all targets.\\
+		Fly toward each one with W, aim with A/D and I/K,
+		and fire with SPACE.\\
+		Hold S to brake — these targets shoot back.\\
+		Use X to toggle warp engines for quick repositioning.
 	}
 }
 
@@ -97,7 +99,7 @@ Event
 	Action Message
 	Value
 	{
-		One more to go!
+		Three down, one to go!
 	}
 }
 
@@ -109,11 +111,12 @@ Event
 	Action Message
 	Value
 	{
-		Success!  Now wait for further instructions.
+		All targets destroyed!  Training complete.\\
+		Stand by for your first real mission.
 	}
 
 	Action Enable
-	value e2
+	Value e2
 
 	Action Stop
 }
@@ -129,4 +132,3 @@ Event
 	Action LoadMission
 	Value titan01.msn
 }
-

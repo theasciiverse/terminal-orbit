@@ -131,7 +131,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 }
 
                 Screen::Playing => {
-                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &world)? {
+                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &mut world)? {
                         // Q — save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
@@ -140,7 +140,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                     }
                     while event::poll(Duration::ZERO)? {
                         let ev2 = event::read()?;
-                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &world)?;
+                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &mut world)?;
                     }
                 }
 
@@ -316,7 +316,7 @@ fn handle_playing_event(
     orbit_cam: &mut bool,
     autopilot: &mut AutopilotMode,
     paused: &mut bool,
-    world: &World,
+    world: &mut World,
 ) -> io::Result<bool> {
     if let Event::Key(KeyEvent { code, modifiers, .. }) = ev {
         if modifiers.contains(KeyModifiers::CONTROL) && code == KeyCode::Char('c') {
@@ -345,6 +345,23 @@ fn handle_playing_event(
             KeyCode::Char('j')                  => input.roll_left  = true,
             KeyCode::Char('l')                  => input.roll_right = true,
             KeyCode::Char(' ')                  => input.fire       = true,
+            KeyCode::Char('m') => {
+                // Toggle: dismiss message if showing, recall last if not.
+                if !world.message.text.is_empty() {
+                    world.message.text.clear();
+                } else if !world.message.last_text.is_empty() {
+                    world.message.text = world.message.last_text.clone();
+                    world.message.age = 0.0;
+                }
+            }
+            KeyCode::Char('u') => lock_nearest_enemy(world),
+            KeyCode::Char('y') => cycle_target(world),
+            KeyCode::Char('f') => cycle_weapon(world),
+            KeyCode::Char('x') => {
+                world.warpspeed = !world.warpspeed;
+                let status = if world.warpspeed { "WARP ON" } else { "WARP OFF" };
+                crate::ui::console::console_add(world, status);
+            }
             KeyCode::Char('z')                  => *dense_stars  = !*dense_stars,
             KeyCode::Char('b')                  => *show_lines   = !*show_lines,
             KeyCode::Char('o')                  => *show_orrery  = !*show_orrery,
@@ -395,6 +412,56 @@ fn briefing_or_play(world: &World) -> Screen {
     } else {
         Screen::Playing
     }
+}
+
+/// Lock the nearest active enemy target.
+fn lock_nearest_enemy(world: &mut World) {
+    let pos = world.player.pos;
+    let nearest = world.targets.iter().enumerate()
+        .filter(|(_, t)| t.age > 0.0 && !t.hidden && !t.friendly)
+        .min_by(|(_, a), (_, b)| {
+            let da = (a.pos - pos).mag2();
+            let db = (b.pos - pos).mag2();
+            da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map(|(i, _)| i);
+    world.lock.target = nearest;
+    if let Some(i) = nearest {
+        let name = world.targets[i].name.clone();
+        crate::ui::console::console_add(world, format!("Locked: {}", name));
+    }
+}
+
+/// Cycle to the next active target (enemy or friendly).
+fn cycle_target(world: &mut World) {
+    let active: Vec<usize> = world.targets.iter().enumerate()
+        .filter(|(_, t)| t.age > 0.0 && !t.hidden)
+        .map(|(i, _)| i)
+        .collect();
+    if active.is_empty() {
+        world.lock.target = None;
+        return;
+    }
+    let current = world.lock.target;
+    let next = match current {
+        Some(cur) => {
+            let pos = active.iter().position(|&i| i == cur).unwrap_or(0);
+            active[(pos + 1) % active.len()]
+        }
+        None => active[0],
+    };
+    world.lock.target = Some(next);
+    let name = world.targets[next].name.clone();
+    crate::ui::console::console_add(world, format!("Target: {}", name));
+}
+
+/// Cycle to the next available weapon.
+fn cycle_weapon(world: &mut World) {
+    let n = world.weapons.len();
+    if n == 0 { return; }
+    world.player.weapon = (world.player.weapon + 1) % n;
+    let name = world.weapons[world.player.weapon].name.clone();
+    crate::ui::console::console_add(world, format!("Weapon: {}", name));
 }
 
 fn player_fire(world: &mut World) {

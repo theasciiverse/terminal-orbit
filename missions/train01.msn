@@ -2,7 +2,6 @@
  *  Training mission #01
  */
 
-/* Verbose reporting from the mission loader */
 Verbose
 
 Cursor
@@ -10,20 +9,17 @@ Cursor
 	Earth -15000
 }
 
-/* Put player here */
 Player { }
 
 Briefing
 {
-	Training Mission #01: One small step\\
-	In this training session you will learn how to move your
-	ship using your low-speed engines.\\
+	Training Mission #01: One Small Step\\
+	In this training session you will learn how to fly your ship.\\
 	Your objective is to fly from Earth orbit to the Moon
 	and back again.\\
 	Follow the instructions which will appear on the screen.\\
-	Briefing concluded.  Good luck, sir!\\
-	You may press 'M' to remove this message from your screen.\\
-	Press 'B' at any time to see this briefing again.
+	Press 'M' at any time to recall the last instruction.\\
+	Briefing concluded.  Good luck!
 }
 
 Event
@@ -35,11 +31,11 @@ Event
 	Action Message
 	Value
 	{
-		Press 'N' to see the names of objects and planets.\\
-		Use the joystick to point your ship toward the moon.\\
-		Then hold 'A' to accelerate toward the moon.\\
-		Your current velocity is shown to the left of the
-		HUD.  Increase speed to about 10000 kps.
+		Press 'N' to toggle planet and object names.\\
+		Use A and D to yaw left and right.\\
+		Use I and K to pitch up and down.\\
+		Point your ship toward the Moon, then hold W
+		to thrust forward and build up speed.
 	}
 }
 
@@ -53,8 +49,10 @@ Event
 	Action Message
 	Value
 	{
-		You can use 'Z' to slow down.\\
-		You can use SPACE to come to a full stop.
+		Good, you are moving away from Earth.\\
+		Hold S to brake and slow down.\\
+		Keep the ship pointed toward the Moon
+		and keep thrusting with W.
 	}
 
 	Action Disable
@@ -72,7 +70,7 @@ Event
 	Value
 	{
 		You are approaching the Moon.\\
-		Be prepared to stop using the SPACE key.
+		Hold S to brake before you arrive.
 	}
 }
 
@@ -84,8 +82,9 @@ Event
 	Action Message
 	Value
 	{
-		You have reached the moon.  Congratulations!\\
-		Now turn your ship around and head back to Earth.
+		You have reached the Moon.  Well done!\\
+		Now turn around and head back to Earth.\\
+		Use A/D and I/K to rotate, then thrust with W.
 	}
 
 	Action Enable
@@ -105,10 +104,10 @@ Event
 	Action Message
 	Value
 	{
-		You did it!  Now you know how to maneuver your
-		ship at low speeds.\\
-		Please wait a few seconds for the next
-		training mission to begin.
+		You did it!  You now know how to fly your ship.\\
+		Remember: W to thrust, S to brake,
+		A/D to yaw, I/K to pitch, J/L to roll.\\
+		Stand by for the next training mission.
 	}
 
 	Action Enable
@@ -128,5 +127,3 @@ Event
 	Action LoadMission
 	Value train02.msn
 }
-
-

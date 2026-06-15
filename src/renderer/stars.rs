@@ -75,6 +75,25 @@ pub fn draw_constellation_lines(canvas: &mut BrailleCanvas, camera: &Camera) {
     }
 }
 
+/// Name, label position (RA hours, Dec degrees) for each constellation.
+/// The position is near the centroid of the stick figure.
+pub const CONSTELLATION_LABELS: &[(&str, f32, f32)] = &[
+    ("Orion",        5.60,  2.0),
+    ("Ursa Major",  12.60, 56.0),
+    ("Cassiopeia",   1.00, 60.0),
+    ("Cygnus",      20.40, 41.0),
+    ("Scorpius",    16.90, -30.0),
+    ("Leo",         10.80, 15.0),
+    ("Gemini",       7.10, 24.0),
+    ("Perseus",      3.50, 45.0),
+    ("Auriga",       5.60, 40.0),
+    ("Taurus",       5.00, 20.0),
+    ("Virgo",       13.10, -2.0),
+    ("Boötes",      14.40, 22.0),
+    ("Andromeda",    1.00, 36.0),
+    ("Pegasus",     22.70, 20.0),
+];
+
 /// Major constellation stick-figure lines as ((RA_h, Dec°), (RA_h, Dec°)) pairs.
 /// Positions from the Yale Bright Star Catalogue (approximate).
 const CONSTELLATION_LINES: &[((f32, f32), (f32, f32))] = &[

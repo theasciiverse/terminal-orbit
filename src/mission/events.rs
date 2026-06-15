@@ -80,6 +80,7 @@ pub fn fire_event(world: &mut World, e: usize) -> Option<String> {
 
             EventActionKind::Message => {
                 let text = action.cvalue.replace("\\\\", "\n");
+                world.message.last_text = text.clone();
                 world.message.text = text;
                 world.message.age = 0.0;
             }

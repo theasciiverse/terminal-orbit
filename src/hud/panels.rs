@@ -15,7 +15,7 @@ use crate::renderer::{
     canvas::BrailleCanvas,
     planets::{draw_single_planet, planet_color},
     projection::Camera,
-    stars::{draw_constellation_lines, draw_stars},
+    stars::{draw_constellation_lines, draw_stars, CONSTELLATION_LABELS},
     texture::PlanetTexture,
     viewport::{draw_enemy_ships, draw_friendly_ships, draw_junk, draw_player_ship_3p},
 };
@@ -173,6 +173,11 @@ fn render_viewport(
 
     render_colored_layers(frame, area, &layers);
 
+    // Constellation name labels — only when both lines and names are enabled.
+    if show_lines && show_names {
+        render_constellation_labels(frame, area, &camera);
+    }
+
     // Optional texture overlay on planets.
     if show_texture {
         render_planets_textured(frame, area, world, &camera, textures);
@@ -302,6 +307,34 @@ fn render_planets_textured(
                     cell.set_bg(Color::Black);
                 }
             }
+        }
+    }
+}
+
+/// Render constellation name labels at their centroid positions.
+fn render_constellation_labels(frame: &mut Frame, area: Rect, camera: &Camera) {
+    for &(name, ra_h, dec_deg) in CONSTELLATION_LABELS {
+        let ra  = ra_h  * std::f32::consts::PI / 12.0;
+        let dec = dec_deg * std::f32::consts::PI / 180.0;
+        let dir = crate::math::Vec3::new(
+            (dec.cos() * ra.cos()) as f64,
+            (dec.cos() * ra.sin()) as f64,
+            dec.sin() as f64,
+        );
+        let Some((dx, dy)) = camera.project_direction(dir) else { continue };
+        // Convert braille-dot coords to terminal cell coords.
+        let cell_x = area.x + (dx / 2) as u16;
+        let cell_y = area.y + (dy / 4) as u16;
+        let w = name.chars().count() as u16;
+        if cell_y < area.y + area.height && cell_x + w <= area.x + area.width {
+            let r = Rect { x: cell_x, y: cell_y, width: w, height: 1 };
+            frame.render_widget(
+                Paragraph::new(Span::styled(
+                    name,
+                    Style::default().fg(Color::Rgb(90, 100, 160)),
+                )),
+                r,
+            );
         }
     }
 }
@@ -517,13 +550,22 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
         )));
     }
 
-    // Last row: mission message or key hint.
-    let msg = if !world.message.text.is_empty() {
-        world.message.text.lines().next().unwrap_or("").to_string()
+    // Remaining rows: mission message (all lines) or split key hint.
+    if !world.message.text.is_empty() {
+        for msg_line in world.message.text.lines() {
+            lines.push(Line::from(format!(" {}", msg_line)));
+        }
     } else {
-        format!(" {}  [WASD/IJKL fly  SPC fire  G orbit  C cam  T texture  B lines  O orrery  N names  Q quit]", world.mission_file)
-    };
-    lines.push(Line::from(msg));
+        let indent = " ".repeat(1 + world.mission_file.len() + 2);
+        lines.push(Line::from(format!(
+            " {}  [WASD/IJKL fly  SPC fire  U lock  Y cycle  F weapon  X warp]",
+            world.mission_file
+        )));
+        lines.push(Line::from(format!(
+            "{}[G orbit  C cam  T texture  B constellations  N names  M msg  Q quit]",
+            indent
+        )));
+    }
 
     let block = Block::default().borders(Borders::ALL).title(" HUD ");
     frame.render_widget(Paragraph::new(lines).block(block), area);
