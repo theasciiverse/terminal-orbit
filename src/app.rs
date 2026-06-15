@@ -308,8 +308,11 @@ fn handle_playing_event(
             *paused = !*paused;
             return Ok(false);
         }
-        // Ignore all other gameplay keys while paused.
+        // Q/Esc always quits, even while paused.
         if *paused {
+            if code == KeyCode::Char('q') || code == KeyCode::Esc {
+                return Ok(true);
+            }
             return Ok(false);
         }
         match code {
