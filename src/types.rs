@@ -306,7 +306,7 @@ impl World {
             delta_t: 1.0 / 30.0,
             abs_t: 0.0,
             gravity: false,
-            orbit_planets: true,
+            orbit_planets: false,
             full_stop: false,
             warpspeed: false,
             superwarp: false,

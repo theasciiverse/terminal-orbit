@@ -8,16 +8,21 @@ use ratatui::{
 
 use crate::save::SaveSlot;
 
-const LOGO: &str = concat!(
-    "   ___  ____  ____  ___  ____  \n",
-    "  / _ \\|  _ \\| __ )|_ _||_   _|\n",
-    " | | | | |_) |  _ \\ | |   | |  \n",
-    " | |_| |  _ <| |_) || |   | |  \n",
-    "  \\___/|_| \\_|____/|___|  |_|  \n",
-    "\n",
-    "   Space Combat Simulator       \n",
-    "   (C) 1999 Steve Belczyk       ",
-);
+// Raw string avoids escaping all the backslashes in the ASCII art.
+const LOGO: &str = r#" _____ _____  ____   __  __  ___  _   _     _    _
+|_   _|| ____||  _ \ |  \/  ||_ _|| \ | |   / \  | |
+  | |  |  _|  | |_) || |\/| | | | |  \| |  / _ \ | |
+  | |  | |___ |  _ < | |  | | | | | |\  | / ___ \| |___
+  |_|  |_____||_| \_\|_|  |_||___|_| \_|/_/   \_\|_____|
+
+   ___  ____  ____  ___  ____
+  / _ \|  _ \| __ )|_ _||_   _|
+ | | | | |_) |  _ \ | |   | |
+ | |_| |  _ <| |_) || |   | |
+  \___/|_| \_|____/|___|  |_|
+
+   Space Combat Simulator
+   (C) 1999 Steve Belczyk       "#;
 
 pub const TITLE_OPTIONS: &[&str] = &["New Game", "Load Game", "Quit"];
 
@@ -34,7 +39,7 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     // Vertical centering: Fill spacers push the content block to the middle.
     // Logo: 5 art rows + 1 blank + 2 subtitle = 8 rows + 1 top padding = 9
     // Menu: 1 blank + N options + 1 blank + 1 hint = N + 3
-    let logo_height: u16 = 9;
+    let logo_height: u16 = 14;
     let menu_height: u16 = TITLE_OPTIONS.len() as u16 + 3;
     let chunks = Layout::vertical([
         Constraint::Fill(1),
@@ -44,9 +49,14 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     ])
     .split(inner);
 
-    // Logo
+    // Pad every logo row to the same width so Alignment::Center keeps a
+    // consistent left edge across rows of different visual widths.
+    let logo_max_w = LOGO.lines().map(|l| l.len()).max().unwrap_or(0);
     let logo_lines: Vec<Line> = LOGO.lines()
-        .map(|l| Line::from(Span::styled(l.to_string(), Style::default().fg(Color::Cyan))))
+        .map(|l| {
+            let padded = format!("{:<width$}", l, width = logo_max_w);
+            Line::from(Span::styled(padded, Style::default().fg(Color::Cyan)))
+        })
         .collect();
     frame.render_widget(
         Paragraph::new(logo_lines).alignment(Alignment::Center),
