@@ -8,23 +8,35 @@ use ratatui::{
 
 use crate::save::SaveSlot;
 
-// Raw string avoids escaping all the backslashes in the ASCII art.
-const LOGO: &str = r#" _____ _____  ____   __  __  ___  _   _     _    _
+// Two separate art blocks so each can be centered at its own natural width.
+const TERMINAL_ART: &str = r#" _____ _____  ____   __  __  ___  _   _     _    _
 |_   _|| ____||  _ \ |  \/  ||_ _|| \ | |   / \  | |
   | |  |  _|  | |_) || |\/| | | | |  \| |  / _ \ | |
   | |  | |___ |  _ < | |  | | | | | |\  | / ___ \| |___
-  |_|  |_____||_| \_\|_|  |_||___|_| \_|/_/   \_\|_____|
+  |_|  |_____||_| \_\|_|  |_||___|_| \_|/_/   \_\|_____|"#;
 
-   ___  ____  ____  ___  ____
+const ORBIT_ART: &str = r#"   ___  ____  ____  ___  ____
   / _ \|  _ \| __ )|_ _||_   _|
  | | | | |_) |  _ \ | |   | |
  | |_| |  _ <| |_) || |   | |
-  \___/|_| \_|____/|___|  |_|
+  \___/|_| \_|____/|___|  |_|"#;
 
-   Space Combat Simulator
-   (C) 1999 Steve Belczyk       "#;
+const SUBTITLE: &str = "   Space Combat Simulator\n   (C) 1999 Steve Belczyk";
 
 pub const TITLE_OPTIONS: &[&str] = &["New Game", "Load Game", "Quit"];
+
+/// Pad all lines of an art block to the block's own max width, then
+/// center the whole block.  Keeps internal letter-column alignment
+/// while letting ratatui center the block in the terminal.
+fn art_lines(art: &str, color: Color) -> Vec<Line<'static>> {
+    let max_w = art.lines().map(|l| l.len()).max().unwrap_or(0);
+    art.lines()
+        .map(|l| {
+            let padded = format!("{:<width$}", l, width = max_w);
+            Line::from(Span::styled(padded, Style::default().fg(color)))
+        })
+        .collect()
+}
 
 pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     let area = frame.area();
@@ -36,36 +48,49 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     let inner = outer.inner(area);
     frame.render_widget(outer, area);
 
-    // Vertical centering: Fill spacers push the content block to the middle.
-    // Logo: 5 art rows + 1 blank + 2 subtitle = 8 rows + 1 top padding = 9
-    // Menu: 1 blank + N options + 1 blank + 1 hint = N + 3
-    let logo_height: u16 = 14;
-    let menu_height: u16 = TITLE_OPTIONS.len() as u16 + 3;
+    // Heights for each section.
+    let terminal_h: u16 = TERMINAL_ART.lines().count() as u16;  // 5
+    let orbit_h:    u16 = ORBIT_ART.lines().count() as u16;     // 5
+    let subtitle_h: u16 = 2;
+    let menu_h:     u16 = TITLE_OPTIONS.len() as u16 + 3;       // blank + N opts + blank + hint
+
     let chunks = Layout::vertical([
         Constraint::Fill(1),
-        Constraint::Length(logo_height),
-        Constraint::Length(menu_height),
+        Constraint::Length(terminal_h),
+        Constraint::Length(1),            // blank between words
+        Constraint::Length(orbit_h),
+        Constraint::Length(1),            // blank before subtitle
+        Constraint::Length(subtitle_h),
+        Constraint::Length(menu_h),
         Constraint::Fill(1),
     ])
     .split(inner);
 
-    // Pad every logo row to the same width so Alignment::Center keeps a
-    // consistent left edge across rows of different visual widths.
-    let logo_max_w = LOGO.lines().map(|l| l.len()).max().unwrap_or(0);
-    let logo_lines: Vec<Line> = LOGO.lines()
-        .map(|l| {
-            let padded = format!("{:<width$}", l, width = logo_max_w);
-            Line::from(Span::styled(padded, Style::default().fg(Color::Cyan)))
-        })
-        .collect();
+    // TERMINAL word — centered at its own width.
     frame.render_widget(
-        Paragraph::new(logo_lines).alignment(Alignment::Center),
+        Paragraph::new(art_lines(TERMINAL_ART, Color::Cyan)).alignment(Alignment::Center),
         chunks[1],
     );
 
+    // ORBIT word — centered at its own (narrower) width.
+    frame.render_widget(
+        Paragraph::new(art_lines(ORBIT_ART, Color::Cyan)).alignment(Alignment::Center),
+        chunks[3],
+    );
+
+    // Subtitle lines.
+    let sub_lines: Vec<Line> = SUBTITLE
+        .lines()
+        .map(|l| Line::from(Span::styled(l.to_string(), Style::default().fg(Color::DarkGray))))
+        .collect();
+    frame.render_widget(
+        Paragraph::new(sub_lines).alignment(Alignment::Center),
+        chunks[5],
+    );
+
     // Menu: blank line, options, blank line, hint.
-    // Pad all options to the same width so Alignment::Center keeps the
-    // cursor column and text column stable regardless of which item is selected.
+    // All options padded to the same width. Use plain ">" so it is
+    // always exactly 1 cell wide (► can render 2 cells in some terminals).
     let max_opt = TITLE_OPTIONS.iter().map(|o| o.len()).max().unwrap_or(8);
     let mut menu_lines: Vec<Line> = vec![Line::from("")];
 
@@ -79,7 +104,7 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
             ))
         } else if i == sel {
             Line::from(Span::styled(
-                format!("  ► {}  ", padded),
+                format!("  > {}  ", padded),
                 Style::default()
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
@@ -101,7 +126,7 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
 
     frame.render_widget(
         Paragraph::new(menu_lines).alignment(Alignment::Center),
-        chunks[2],
+        chunks[6],
     );
 }
 
@@ -138,7 +163,7 @@ pub fn render_load_menu(frame: &mut Frame, slots: &[SaveSlot], sel: usize) {
         } else {
             Style::default().fg(Color::White)
         };
-        let prefix = if i == sel { "►" } else { " " };
+        let prefix = if i == sel { ">" } else { " " };
         lines.push(Line::from(Span::styled(
             format!("  {} {}", prefix, row.trim_start()),
             style,
