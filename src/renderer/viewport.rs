@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use crate::combat::explosions::{draw_booms, draw_missiles};
 use crate::math::Vec3;
 use crate::model::Model;
-use crate::types::{Target, World};
+use crate::types::{Player, Target, World};
 use super::canvas::BrailleCanvas;
 use super::planets::draw_planets;
 use super::projection::Camera;
@@ -88,6 +88,41 @@ pub fn draw_junk(canvas: &mut BrailleCanvas, camera: &Camera, player_vel: Vec3, 
         let x = (base_x + dx).rem_euclid(w) as u32;
         let y = (base_y + dy).rem_euclid(h) as u32;
         canvas.set(x, y);
+    }
+}
+
+/// Draw a simple wireframe ship at the player's position and orientation,
+/// used for the third-person orbit camera view.
+pub fn draw_player_ship_3p(canvas: &mut BrailleCanvas, camera: &Camera, player: &Player) {
+    // A minimal "fighter" silhouette in model space:
+    //   +X = forward (view), +Y = right, +Z = up
+    let edges: &[(Vec3, Vec3)] = &[
+        // Fuselage spine
+        (Vec3::new(-3.0, 0.0, 0.0), Vec3::new( 3.0, 0.0, 0.0)),
+        // Main wings (swept back)
+        (Vec3::new( 1.0, 0.0, 0.0), Vec3::new(-1.5,  4.0, 0.0)),
+        (Vec3::new( 1.0, 0.0, 0.0), Vec3::new(-1.5, -4.0, 0.0)),
+        // Wing tips
+        (Vec3::new(-1.5,  4.0, 0.0), Vec3::new(-3.0,  3.0, 0.0)),
+        (Vec3::new(-1.5, -4.0, 0.0), Vec3::new(-3.0, -3.0, 0.0)),
+        // Vertical tail fin
+        (Vec3::new(-1.0, 0.0, 0.0), Vec3::new(-3.0, 0.0, 2.0)),
+        (Vec3::new(-3.0, 0.0, 0.0), Vec3::new(-3.0, 0.0, 2.0)),
+        // Cockpit outline
+        (Vec3::new( 2.0, 0.0, 0.5), Vec3::new( 1.0, 0.8, 0.0)),
+        (Vec3::new( 2.0, 0.0, 0.5), Vec3::new( 1.0,-0.8, 0.0)),
+    ];
+
+    // Model → world: nose along player.view, starboard along player.right, up along player.up.
+    let scale = 0.12_f64; // ship spans ~1 unit so it frames against a ~1-unit-radius planet
+    for (v0, v1) in edges {
+        let w0 = player.pos + player.view * v0.x * scale
+                            + player.right * v0.y * scale
+                            + player.up * v0.z * scale;
+        let w1 = player.pos + player.view * v1.x * scale
+                            + player.right * v1.y * scale
+                            + player.up * v1.z * scale;
+        draw_edge_world(canvas, camera, w0, w1);
     }
 }
 

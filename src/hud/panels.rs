@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::f64::consts::PI;
+
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -6,12 +9,15 @@ use ratatui::{
     Frame,
 };
 
+use crate::autopilot::AutopilotMode;
 use crate::math::Vec3;
 use crate::renderer::{
     canvas::BrailleCanvas,
+    planets::{draw_single_planet, planet_color},
     projection::Camera,
-    stars::draw_stars,
-    viewport::{draw_enemy_ships, draw_friendly_ships, draw_junk},
+    stars::{draw_constellation_lines, draw_stars},
+    texture::PlanetTexture,
+    viewport::{draw_enemy_ships, draw_friendly_ships, draw_junk, draw_player_ship_3p},
 };
 use crate::types::World;
 use crate::ui::console::active_lines;
@@ -19,6 +25,10 @@ use crate::ui::console::active_lines;
 use super::radar::render_radar;
 
 const HUD_HEIGHT: u16 = 12;
+/// Distance behind the ship for the third-person camera.
+const CAM_3P_DIST:   f64 = 2.0;
+/// Height above the ship for the third-person camera.
+const CAM_3P_HEIGHT: f64 = 0.5;
 
 pub fn render(
     frame: &mut Frame,
@@ -28,6 +38,11 @@ pub fn render(
     show_orrery: bool,
     show_names: bool,
     paused: bool,
+    show_texture: bool,
+    textures: &HashMap<String, PlanetTexture>,
+    orbit_cam: bool,
+    autopilot: AutopilotMode,
+    show_lines: bool,
 ) {
     let area = frame.area();
 
@@ -36,8 +51,8 @@ pub fn render(
         .constraints([Constraint::Min(5), Constraint::Length(HUD_HEIGHT)])
         .split(area);
 
-    render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names);
-    render_hud(frame, chunks[1], world);
+    render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names, show_texture, textures, orbit_cam, autopilot, show_lines);
+    render_hud(frame, chunks[1], world, autopilot);
 
     if paused {
         render_pause_overlay(frame, area);
@@ -52,6 +67,11 @@ fn render_viewport(
     dense: bool,
     show_orrery: bool,
     show_names: bool,
+    show_texture: bool,
+    textures: &HashMap<String, PlanetTexture>,
+    orbit_cam: bool,
+    autopilot: AutopilotMode,
+    show_lines: bool,
 ) {
     if show_orrery {
         crate::ui::orrery::render_orrery(frame, area, world, show_names);
@@ -64,37 +84,246 @@ fn render_viewport(
         return;
     }
 
-    let camera = Camera::from_player(&world.player, w_dots, h_dots);
+    let camera = if orbit_cam {
+        // Focus point: the orbited planet, or a point far ahead if no autopilot.
+        let focus = match autopilot {
+            AutopilotMode::Orbit { planet_idx } => {
+                world.planets.get(planet_idx)
+                    .map(|p| p.pos)
+                    .unwrap_or_else(|| world.player.pos + world.player.view * 200.0)
+            }
+            AutopilotMode::Off => world.player.pos + world.player.view * 200.0,
+        };
+        Camera::third_person(
+            world.player.pos,
+            world.player.view,
+            world.player.up,
+            focus,
+            w_dots,
+            h_dots,
+            CAM_3P_DIST,
+            CAM_3P_HEIGHT,
+        )
+    } else {
+        Camera::from_player(&world.player, w_dots, h_dots)
+    };
 
-    let mut c_stars    = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_stars_bright = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_stars_medium = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_stars_dim    = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_lines    = BrailleCanvas::new(w_dots, h_dots);
     let mut c_junk     = BrailleCanvas::new(w_dots, h_dots);
-    let mut c_planets  = BrailleCanvas::new(w_dots, h_dots);
+    let mut c_player   = BrailleCanvas::new(w_dots, h_dots);
     let mut c_friendly = BrailleCanvas::new(w_dots, h_dots);
     let mut c_enemy    = BrailleCanvas::new(w_dots, h_dots);
     let mut c_fx       = BrailleCanvas::new(w_dots, h_dots);
 
-    draw_stars(&mut c_stars, &camera, stars, dense);
-    draw_junk(&mut c_junk, &camera, world.player.vel, world.abs_t);
-    crate::renderer::planets::draw_planets(&mut c_planets, &camera, world);
+    draw_stars(&mut c_stars_bright, &mut c_stars_medium, &mut c_stars_dim, &camera, stars, dense);
+    if show_lines {
+        draw_constellation_lines(&mut c_lines, &camera);
+    }
+    // In first-person mode junk drifts with player velocity; in orbit cam keep it static.
+    let junk_vel = if orbit_cam { Vec3::zero() } else { world.player.vel };
+    draw_junk(&mut c_junk, &camera, junk_vel, world.abs_t);
+    // Draw player ship wireframe in third-person.
+    if orbit_cam {
+        draw_player_ship_3p(&mut c_player, &camera, &world.player);
+    }
     draw_friendly_ships(&mut c_friendly, &camera, world);
     draw_enemy_ships(&mut c_enemy, &camera, world);
     crate::combat::explosions::draw_missiles(&mut c_fx, &camera, world);
     crate::combat::explosions::draw_booms(&mut c_fx, &camera, world);
 
-    let layers: &[(&BrailleCanvas, Color)] = &[
-        (&c_stars,    Color::White),
-        (&c_junk,     Color::DarkGray),
-        (&c_planets,  Color::Cyan),
-        (&c_friendly, Color::Green),
-        (&c_enemy,    Color::Red),
-        (&c_fx,       Color::Yellow),
+    // Build one canvas per planet with its own color (skip in texture mode — texture covers them).
+    let mut planet_canvases: Vec<(BrailleCanvas, Color)> = Vec::new();
+    if !show_texture {
+        for p in 0..world.planets.len() {
+            let planet = &world.planets[p];
+            if planet.hidden || planet.radius <= 0.0 {
+                continue;
+            }
+            let mut c = BrailleCanvas::new(w_dots, h_dots);
+            draw_single_planet(&mut c, &camera, p, world);
+            let color = planet_color(&planet.name);
+            planet_canvases.push((c, color));
+        }
+    }
+
+    // Base layers: dim stars, then brighter stars, then lines.
+    let mut layers: Vec<(&BrailleCanvas, Color)> = vec![
+        (&c_stars_dim,    Color::Rgb(80,  80,  80)),
+        (&c_stars_medium, Color::Rgb(180, 180, 180)),
+        (&c_lines,        Color::Rgb(45,  55,  95)),
+        (&c_stars_bright, Color::White),
+        (&c_junk,         Color::DarkGray),
     ];
-    render_colored_layers(frame, area, layers);
+
+    // Insert planet layers (each with its own color).
+    for (c, color) in &planet_canvases {
+        layers.push((c, *color));
+    }
+
+    // Player ship (third-person), then other ships and FX on top.
+    if orbit_cam {
+        layers.push((&c_player, Color::Cyan));
+    }
+    layers.push((&c_friendly, Color::Green));
+    layers.push((&c_enemy,    Color::Red));
+    layers.push((&c_fx,       Color::Yellow));
+
+    render_colored_layers(frame, area, &layers);
+
+    // Optional texture overlay on planets.
+    if show_texture {
+        render_planets_textured(frame, area, world, &camera, textures);
+        // Re-stamp ship wireframe on top — the texture pass overwrites braille chars.
+        if orbit_cam {
+            render_braille_direct(frame, area, &c_player, Color::Cyan);
+        }
+    }
 
     render_console_overlay(frame, area, world);
 
     if show_names {
         render_3d_name_overlays(frame, area, world, &camera);
+    }
+}
+
+/// Raycast a sphere at `center` with `radius` from `ray_origin` in direction `ray_dir` (unit).
+/// Returns the distance t to the first intersection, or None if no hit.
+fn raycast_planet(ray_origin: Vec3, ray_dir: Vec3, center: Vec3, radius: f64) -> Option<f64> {
+    let oc = ray_origin - center;
+    let b = 2.0 * oc.dot(ray_dir);
+    let c = oc.dot(oc) - radius * radius;
+    let discriminant = b * b - 4.0 * c;
+    if discriminant < 0.0 {
+        return None;
+    }
+    let sqrt_d = discriminant.sqrt();
+    let t1 = (-b - sqrt_d) * 0.5;
+    let t2 = (-b + sqrt_d) * 0.5;
+    if t1 > 0.001 { Some(t1) }
+    else if t2 > 0.001 { Some(t2) }
+    else { None }
+}
+
+/// Render textured planets by raycasting every viewport cell against all planet spheres.
+/// No bounding box — correct for any viewing angle, handles partial off-screen planets.
+fn render_planets_textured(
+    frame: &mut Frame,
+    area: Rect,
+    world: &World,
+    camera: &Camera,
+    textures: &HashMap<String, PlanetTexture>,
+) {
+    if area.width == 0 || area.height == 0 { return; }
+
+    // Cull planets that are completely behind the camera.
+    struct VisiblePlanet<'a> {
+        planet: &'a crate::types::Planet,
+        texture: Option<&'a PlanetTexture>,
+        sun_dir: Vec3,
+    }
+    let sol_pos = world.planets.first().map(|p| p.pos).unwrap_or(Vec3::zero());
+    let visible: Vec<VisiblePlanet> = world.planets.iter().filter_map(|planet| {
+        if planet.hidden || planet.radius <= 0.0 { return None; }
+        let dp = planet.pos - camera.pos;
+        let fwd = dp.dot(camera.view);
+        // Keep if any part of the sphere is in front: fwd + radius > 0
+        if fwd + planet.radius <= 0.001 { return None; }
+        let dist = dp.mag2().sqrt();
+        let tex = textures.get(&planet.name.to_lowercase());
+        let sun_dir = if dist > 0.001 { (sol_pos - planet.pos).normalize() } else { camera.view };
+        Some(VisiblePlanet { planet, texture: tex, sun_dir })
+    }).collect();
+
+    if visible.is_empty() { return; }
+
+    let w = area.width as f64;
+    let h = area.height as f64;
+    let buf = frame.buffer_mut();
+
+    for cy in 0..area.height {
+        for cx in 0..area.width {
+            // NDC of cell centre.
+            let ndc_x = ((cx as f64 + 0.5) / w) * 2.0 - 1.0;
+            let ndc_y = 1.0 - ((cy as f64 + 0.5) / h) * 2.0;
+
+            // World-space ray direction for this cell.
+            let ray_dir = (camera.view
+                + camera.right * (ndc_x * camera.aspect / camera.fov_scale)
+                + camera.up    * (ndc_y           / camera.fov_scale))
+                .normalize();
+
+            // Find nearest planet hit.
+            let mut best_t = f64::MAX;
+            let mut best_color: Option<Color> = None;
+
+            for vp in &visible {
+                let Some(t) = raycast_planet(camera.pos, ray_dir, vp.planet.pos, vp.planet.radius) else { continue };
+                if t >= best_t { continue; }
+                best_t = t;
+
+                let hit    = camera.pos + ray_dir * t;
+                let normal = (hit - vp.planet.pos) / vp.planet.radius;
+
+                // Rotate normal by planet oblicity (X-axis) before UV mapping.
+                let ob  = vp.planet.oblicity.to_radians();
+                let nx  = normal.x;
+                let ny  = normal.y * ob.cos() + normal.z * ob.sin();
+                let nz  = -normal.y * ob.sin() + normal.z * ob.cos();
+                let u   = (nx.atan2(nz) + PI) / (2.0 * PI);
+                let v   = (ny.asin() + PI / 2.0) / PI;
+
+                let diffuse    = normal.dot(vp.sun_dir).max(0.0);
+                // 0.40 ambient so the night side stays visible in cinematic view.
+                let brightness = (0.40 + diffuse * 0.60).min(1.0);
+
+                let (r, g, b) = if let Some(tex) = vp.texture {
+                    tex.sample(u, v)
+                } else {
+                    match planet_color(&vp.planet.name) {
+                        Color::Rgb(r, g, b) => (r, g, b),
+                        _ => (120, 120, 120),
+                    }
+                };
+                let r = (r as f64 * brightness) as u8;
+                let g = (g as f64 * brightness) as u8;
+                let b = (b as f64 * brightness) as u8;
+                best_color = Some(Color::Rgb(r, g, b));
+            }
+
+            if let Some(color) = best_color {
+                let screen_x = area.x + cx;
+                let screen_y = area.y + cy;
+                if let Some(cell) = buf.cell_mut(ratatui::layout::Position { x: screen_x, y: screen_y }) {
+                    cell.set_char('█');
+                    cell.set_fg(color);
+                    cell.set_bg(Color::Black);
+                }
+            }
+        }
+    }
+}
+
+/// Write non-empty braille cells from `canvas` directly to the frame buffer.
+/// Used to stamp a wireframe layer on top of texture pixels after the texture pass.
+fn render_braille_direct(frame: &mut Frame, area: Rect, canvas: &BrailleCanvas, color: Color) {
+    let rows = canvas.rows();
+    let buf = frame.buffer_mut();
+    for (row_idx, row_str) in rows.iter().enumerate() {
+        let screen_y = area.y + row_idx as u16;
+        if screen_y >= area.y + area.height { break; }
+        for (col_idx, ch) in row_str.chars().enumerate() {
+            if ch as u32 > 0x2800 {
+                let screen_x = area.x + col_idx as u16;
+                if screen_x >= area.x + area.width { break; }
+                if let Some(cell) = buf.cell_mut(ratatui::layout::Position { x: screen_x, y: screen_y }) {
+                    cell.set_char(ch);
+                    cell.set_fg(color);
+                }
+            }
+        }
     }
 }
 
@@ -203,7 +432,7 @@ fn render_pause_overlay(frame: &mut Frame, area: Rect) {
     frame.render_widget(Paragraph::new(lines), inner);
 }
 
-fn render_hud(frame: &mut Frame, area: Rect, world: &World) {
+fn render_hud(frame: &mut Frame, area: Rect, world: &World, autopilot: AutopilotMode) {
     // Split HUD: radar on left (~23 cols), stats on right.
     let radar_width = 23u16;
     let chunks = Layout::default()
@@ -215,7 +444,7 @@ fn render_hud(frame: &mut Frame, area: Rect, world: &World) {
         .split(area);
 
     render_radar_panel(frame, chunks[0], world);
-    render_stats_panel(frame, chunks[1], world);
+    render_stats_panel(frame, chunks[1], world, autopilot);
 }
 
 fn render_radar_panel(frame: &mut Frame, area: Rect, world: &World) {
@@ -225,7 +454,7 @@ fn render_radar_panel(frame: &mut Frame, area: Rect, world: &World) {
     frame.render_widget(Paragraph::new(lines).block(block), area);
 }
 
-fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World) {
+fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: AutopilotMode) {
     let p = &world.player;
     let speed = p.vel.mag2().sqrt();
     let shields_pct = if p.maxshields > 0.0 {
@@ -278,11 +507,21 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World) {
         lines.push(Line::from(format!(" WP#{} {} {:.2}u", wp_idx, arrow, dist)));
     }
 
+    // Autopilot status row.
+    if let AutopilotMode::Orbit { planet_idx } = autopilot {
+        let planet_name = world.planets.get(planet_idx)
+            .map(|p| p.name.as_str()).unwrap_or("?");
+        lines.push(Line::from(Span::styled(
+            format!(" [AUTOPILOT]  Orbit: {}  — press G to disengage", planet_name),
+            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+        )));
+    }
+
     // Last row: mission message or key hint.
     let msg = if !world.message.text.is_empty() {
         world.message.text.lines().next().unwrap_or("").to_string()
     } else {
-        format!(" {}  [WASD/IJKL fly  SPC fire  P pause  O orrery  N names  Q quit]", world.mission_file)
+        format!(" {}  [WASD/IJKL fly  SPC fire  G orbit  C cam  T texture  B lines  O orrery  N names  Q quit]", world.mission_file)
     };
     lines.push(Line::from(msg));
 

@@ -9,6 +9,7 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 
+use crate::autopilot::{find_nearest_planet, tick_autopilot, AutopilotMode};
 use crate::combat::{fire_missile, move_booms, move_missiles};
 use crate::config::{read_prefs, write_prefs, Prefs};
 use crate::input::InputState;
@@ -16,6 +17,7 @@ use crate::mission::{do_events, load_mission};
 use crate::physics::{move_planets, move_player, move_targets};
 use crate::planet_data::{init_weapons, reset_planets};
 use crate::renderer::stars::all_stars;
+use crate::renderer::texture::load_all_textures;
 use crate::save::{push_save, read_saves, SaveSlot};
 use crate::scores::{record_score, top_scores};
 use crate::types::World;
@@ -28,6 +30,7 @@ use crate::ui::{
 const FRAME: Duration = Duration::from_millis(33);
 const MISSIONS_DIR: &str = "missions";
 const MODELS_DIR: &str = "models";
+const MAPS_DIR: &str = "maps";
 const START_MISSION: &str = "train01.msn";
 
 enum Screen {
@@ -63,10 +66,15 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
     apply_prefs(&prefs, &mut world);
 
     let stars = all_stars();
+    let textures = load_all_textures(Path::new(MAPS_DIR));
     let mut dense_stars = prefs.dense_stars;
     let mut show_orrery = false;
     let mut show_names = false;
+    let mut show_texture = false;
+    let mut show_lines  = false;
     let mut paused = false;
+    let mut orbit_cam = false;
+    let mut autopilot = AutopilotMode::Off;
     let mut input = InputState::default();
     let mut last_tick = Instant::now();
     let mut screen = Screen::Title(0);
@@ -82,7 +90,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
             Screen::Title(sel) => render_title(frame, *sel, &saves_cache),
             Screen::Briefing { scores } => briefing::render(frame, &world, scores),
             Screen::Playing => {
-                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names, paused)
+                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names, paused, show_texture, &textures, orbit_cam, autopilot, show_lines)
             }
             Screen::LoadMenu { slots, sel } => render_load_menu(frame, slots, *sel),
         })?;
@@ -123,7 +131,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 }
 
                 Screen::Playing => {
-                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut paused)? {
+                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &world)? {
                         // Q — save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
@@ -132,7 +140,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                     }
                     while event::poll(Duration::ZERO)? {
                         let ev2 = event::read()?;
-                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut paused)?;
+                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &world)?;
                     }
                 }
 
@@ -157,6 +165,11 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 player_fire(&mut world);
             }
 
+            // Autopilot overrides manual input when engaged.
+            if autopilot != AutopilotMode::Off {
+                input = InputState::default();
+                tick_autopilot(&mut world, autopilot, dt);
+            }
             input.apply_to_player(&mut world.player);
             move_player(&mut world);
             move_targets(&mut world);
@@ -291,13 +304,19 @@ fn handle_load_event(
 }
 
 /// Returns true if the caller should return to the title screen.
+#[allow(clippy::too_many_arguments)]
 fn handle_playing_event(
     ev: Event,
     input: &mut InputState,
     dense_stars: &mut bool,
     show_orrery: &mut bool,
     show_names: &mut bool,
+    show_texture: &mut bool,
+    show_lines: &mut bool,
+    orbit_cam: &mut bool,
+    autopilot: &mut AutopilotMode,
     paused: &mut bool,
+    world: &World,
 ) -> io::Result<bool> {
     if let Event::Key(KeyEvent { code, modifiers, .. }) = ev {
         if modifiers.contains(KeyModifiers::CONTROL) && code == KeyCode::Char('c') {
@@ -326,9 +345,21 @@ fn handle_playing_event(
             KeyCode::Char('j')                  => input.roll_left  = true,
             KeyCode::Char('l')                  => input.roll_right = true,
             KeyCode::Char(' ')                  => input.fire       = true,
-            KeyCode::Char('z')                  => *dense_stars = !*dense_stars,
-            KeyCode::Char('o')                  => *show_orrery = !*show_orrery,
-            KeyCode::Char('n')                  => *show_names  = !*show_names,
+            KeyCode::Char('z')                  => *dense_stars  = !*dense_stars,
+            KeyCode::Char('b')                  => *show_lines   = !*show_lines,
+            KeyCode::Char('o')                  => *show_orrery  = !*show_orrery,
+            KeyCode::Char('n')                  => *show_names   = !*show_names,
+            KeyCode::Char('t')                  => *show_texture = !*show_texture,
+            KeyCode::Char('c')                  => *orbit_cam    = !*orbit_cam,
+            KeyCode::Char('g') => {
+                // Toggle orbit autopilot on nearest planet.
+                if *autopilot != AutopilotMode::Off {
+                    *autopilot = AutopilotMode::Off;
+                } else if let Some(idx) = find_nearest_planet(world) {
+                    *autopilot = AutopilotMode::Orbit { planet_idx: idx };
+                    *orbit_cam = true;  // auto-switch to third-person for the cinematic view
+                }
+            }
             _ => {}
         }
     }

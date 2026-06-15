@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
 
+use ratatui::style::Color;
+
 use crate::math::Vec3;
 use crate::types::{Planet, World};
 
@@ -178,4 +180,65 @@ fn draw_orbits(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
             draw_edge_world(canvas, camera, pts[i], pts[i + 1]);
         }
     }
+}
+
+// ─── Per-planet color ──────────────────────────────────────────────────────────
+
+pub fn planet_color(name: &str) -> Color {
+    match name {
+        "Sol" => Color::Rgb(255, 235, 80),
+        "Mercury" => Color::Rgb(170, 150, 130),
+        "Venus" => Color::Rgb(220, 195, 100),
+        "Earth" => Color::Rgb(50, 130, 240),
+        "Moon" => Color::Rgb(160, 160, 155),
+        "Mars" => Color::Rgb(200, 80, 40),
+        "Phobos" | "Deimos" => Color::Rgb(155, 120, 100),
+        "Jupiter" => Color::Rgb(210, 165, 95),
+        "Io" => Color::Rgb(220, 200, 60),
+        "Europa" => Color::Rgb(180, 165, 150),
+        "Ganymede" | "Callisto" => Color::Rgb(130, 110, 95),
+        "Saturn" => Color::Rgb(215, 195, 130),
+        "Uranus" => Color::Rgb(95, 205, 215),
+        "Neptune" => Color::Rgb(55, 75, 215),
+        "Pluto" | "Charon" => Color::Rgb(175, 155, 135),
+        _ => Color::Rgb(140, 135, 130),
+    }
+}
+
+// ─── Draw a single planet (sphere + rings) ────────────────────────────────────
+
+/// Draw only one planet's sphere and rings onto `canvas`.
+/// Replicates the LOD logic from `draw_planets` for a single planet index.
+pub fn draw_single_planet(
+    canvas: &mut BrailleCanvas,
+    camera: &Camera,
+    planet_idx: usize,
+    world: &World,
+) {
+    if planet_idx >= world.planets.len() {
+        return;
+    }
+    let planet = &world.planets[planet_idx];
+    if planet.hidden || planet.radius <= 0.0 {
+        return;
+    }
+    let dp = planet.pos - camera.pos;
+    let abs_range2 = dp.mag2();
+    let r = if planet.radius > 0.0 { abs_range2.sqrt() / planet.radius } else { f64::MAX };
+
+    if r < 5.0 {
+        draw_sphere(canvas, camera, planet, 12, 12);
+        draw_rings_for(canvas, camera, planet_idx, world);
+    } else if r < 25.0 {
+        draw_sphere(canvas, camera, planet, 8, 8);
+        draw_rings_for(canvas, camera, planet_idx, world);
+    } else if r < 200.0 {
+        draw_sphere(canvas, camera, planet, 4, 4);
+        draw_rings_for(canvas, camera, planet_idx, world);
+    } else if r < 50_000.0 {
+        let _ = camera.project_point(planet.pos).map(|(x, y)| {
+            canvas.set(x, y);
+        });
+    }
+    // Beyond 50 000 radii: skip entirely.
 }

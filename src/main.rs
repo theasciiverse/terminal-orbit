@@ -1,5 +1,6 @@
 mod ai;
 mod app;
+mod autopilot;
 mod combat;
 mod constants;
 mod hud;

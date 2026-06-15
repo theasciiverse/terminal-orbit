@@ -11,7 +11,7 @@ fn main() {
 
     if let Ok(text) = fs::read_to_string(stars_h) {
         let entries: Vec<[f32; 4]> = parse_stars(&text);
-        if entries.len() == 2000 {
+        if entries.len() >= 1900 {
             let mut out = String::from("pub const STARS: &[[f32; 4]] = &[\n");
             for e in &entries {
                 out.push_str(&format!("    [{:.6}f32, {:.6}f32, {:.6}f32, {:.6}f32],\n",
@@ -43,8 +43,13 @@ fn parse_stars(text: &str) -> Vec<[f32; 4]> {
     for line in text.lines() {
         let line = line.trim();
         if !line.starts_with('{') { continue; }
-        let inner = line.trim_start_matches('{').trim_end_matches('}')
-            .trim_end_matches(',').trim();
+        // Extract everything between the outermost { } braces.
+        let Some(open)  = line.find('{') else { continue };
+        // Use the FIRST closing brace — the last line ends with `} };` (array closer)
+        // and rfind would grab the wrong one.
+        let Some(close) = line[open..].find('}').map(|i| open + i) else { continue };
+        if close <= open { continue; }
+        let inner = &line[open + 1..close];
         let nums: Vec<f32> = inner.split(',')
             .filter_map(|s| s.trim().parse().ok())
             .collect();

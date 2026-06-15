@@ -40,6 +40,46 @@ impl Camera {
         self.project_dp(dir)
     }
 
+    /// Camera placed behind and above the ship, looking diagonally past it
+    /// toward `focus` (the orbited planet).  The ship silhouette sits in the
+    /// foreground with the planet visible beyond it.
+    /// `dist` = distance behind ship, `height` = distance above ship.
+    pub fn third_person(
+        ship_pos: Vec3,
+        ship_view: Vec3,
+        ship_up: Vec3,
+        focus: Vec3,
+        w_dots: u32,
+        h_dots: u32,
+        dist: f64,
+        height: f64,
+    ) -> Self {
+        // Camera sits behind and slightly above the ship.
+        let pos = ship_pos - ship_view * dist + ship_up * height;
+        // Look diagonally toward the planet (not at the ship).
+        let view = (focus - pos).normalize();
+        // Derive right/up from view + ship_up hint.
+        let right = view.cross(ship_up);
+        let (right, up) = if right.mag2() > 1e-10 {
+            let r = right.normalize();
+            (r, r.cross(view).normalize())
+        } else {
+            let fallback = Vec3::new(1.0, 0.0, 0.0);
+            let r = view.cross(fallback).normalize();
+            (r, r.cross(view).normalize())
+        };
+        Camera {
+            pos,
+            view,
+            up,
+            right,
+            fov_scale: 1.0 / (std::f64::consts::PI / 6.0).tan(),
+            aspect: w_dots as f64 / h_dots as f64,
+            w_dots,
+            h_dots,
+        }
+    }
+
     pub fn project_dp(&self, dp: Vec3) -> Option<(u32, u32)> {
         let z = dp.dot(self.view);
         if z <= 0.001 {
