@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph},
@@ -31,13 +31,18 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     let inner = outer.inner(area);
     frame.render_widget(outer, area);
 
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(10),
-            Constraint::Min(5),
-        ])
-        .split(inner);
+    // Vertical centering: Fill spacers push the content block to the middle.
+    // Logo: 5 art rows + 1 blank + 2 subtitle = 8 rows + 1 top padding = 9
+    // Menu: 1 blank + N options + 1 blank + 1 hint = N + 3
+    let logo_height: u16 = 9;
+    let menu_height: u16 = TITLE_OPTIONS.len() as u16 + 3;
+    let chunks = Layout::vertical([
+        Constraint::Fill(1),
+        Constraint::Length(logo_height),
+        Constraint::Length(menu_height),
+        Constraint::Fill(1),
+    ])
+    .split(inner);
 
     // Logo
     let logo_lines: Vec<Line> = LOGO.lines()
@@ -45,30 +50,33 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
         .collect();
     frame.render_widget(
         Paragraph::new(logo_lines).alignment(Alignment::Center),
-        chunks[0],
+        chunks[1],
     );
 
-    // Menu + hints
-    let mut menu_lines: Vec<Line> = Vec::new();
-    menu_lines.push(Line::from(""));
+    // Menu: blank line, options, blank line, hint.
+    // Pad all options to the same width so Alignment::Center keeps the
+    // cursor column and text column stable regardless of which item is selected.
+    let max_opt = TITLE_OPTIONS.iter().map(|o| o.len()).max().unwrap_or(8);
+    let mut menu_lines: Vec<Line> = vec![Line::from("")];
 
     for (i, opt) in TITLE_OPTIONS.iter().enumerate() {
         let disabled = i == 1 && saves.is_empty();
+        let padded = format!("{:<width$}", opt, width = max_opt);
         let line = if disabled {
             Line::from(Span::styled(
-                format!("    {}  (no saves)", opt),
+                format!("    {}  (no saves)", padded),
                 Style::default().fg(Color::DarkGray),
             ))
         } else if i == sel {
             Line::from(Span::styled(
-                format!("  ► {}  ", opt),
+                format!("  ► {}  ", padded),
                 Style::default()
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
             ))
         } else {
             Line::from(Span::styled(
-                format!("    {}  ", opt),
+                format!("    {}  ", padded),
                 Style::default().fg(Color::White),
             ))
         };
@@ -77,13 +85,13 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
 
     menu_lines.push(Line::from(""));
     menu_lines.push(Line::from(Span::styled(
-        "  [↑/↓] Navigate   [Enter] Select   [Q] Quit",
+        "[↑/↓] Navigate   [Enter] Select   [Q] Quit",
         Style::default().fg(Color::DarkGray),
     )));
 
     frame.render_widget(
         Paragraph::new(menu_lines).alignment(Alignment::Center),
-        chunks[1],
+        chunks[2],
     );
 }
 
