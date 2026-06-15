@@ -64,6 +64,8 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
 
     let stars = all_stars();
     let mut dense_stars = prefs.dense_stars;
+    let mut show_orrery = false;
+    let mut show_names = false;
     let mut input = InputState::default();
     let mut last_tick = Instant::now();
     let mut screen = Screen::Title(0);
@@ -79,7 +81,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
             Screen::Title(sel) => render_title(frame, *sel, &saves_cache),
             Screen::Briefing { scores } => briefing::render(frame, &world, scores),
             Screen::Playing => {
-                crate::hud::panels::render(frame, &world, &stars, dense_stars)
+                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names)
             }
             Screen::LoadMenu { slots, sel } => render_load_menu(frame, slots, *sel),
         })?;
@@ -120,7 +122,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 }
 
                 Screen::Playing => {
-                    if handle_playing_event(ev, &mut input, &mut dense_stars)? {
+                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names)? {
                         // Q — save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
@@ -129,7 +131,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                     }
                     while event::poll(Duration::ZERO)? {
                         let ev2 = event::read()?;
-                        handle_playing_event(ev2, &mut input, &mut dense_stars)?;
+                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names)?;
                     }
                 }
 
@@ -292,6 +294,8 @@ fn handle_playing_event(
     ev: Event,
     input: &mut InputState,
     dense_stars: &mut bool,
+    show_orrery: &mut bool,
+    show_names: &mut bool,
 ) -> io::Result<bool> {
     if let Event::Key(KeyEvent { code, modifiers, .. }) = ev {
         if modifiers.contains(KeyModifiers::CONTROL) && code == KeyCode::Char('c') {
@@ -309,6 +313,8 @@ fn handle_playing_event(
             KeyCode::Char('l')                  => input.roll_right = true,
             KeyCode::Char(' ')                  => input.fire       = true,
             KeyCode::Char('z')                  => *dense_stars = !*dense_stars,
+            KeyCode::Char('o')                  => *show_orrery = !*show_orrery,
+            KeyCode::Char('n')                  => *show_names  = !*show_names,
             _ => {}
         }
     }

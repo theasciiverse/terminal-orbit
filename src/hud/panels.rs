@@ -11,7 +11,7 @@ use crate::renderer::{
     canvas::BrailleCanvas,
     projection::Camera,
     stars::draw_stars,
-    viewport::draw_scene,
+    viewport::{draw_junk, draw_scene},
 };
 use crate::types::World;
 use crate::ui::console::active_lines;
@@ -20,7 +20,14 @@ use super::radar::render_radar;
 
 const HUD_HEIGHT: u16 = 12;
 
-pub fn render(frame: &mut Frame, world: &World, stars: &[Vec3], dense: bool) {
+pub fn render(
+    frame: &mut Frame,
+    world: &World,
+    stars: &[Vec3],
+    dense: bool,
+    show_orrery: bool,
+    show_names: bool,
+) {
     let area = frame.area();
 
     let chunks = Layout::default()
@@ -28,14 +35,26 @@ pub fn render(frame: &mut Frame, world: &World, stars: &[Vec3], dense: bool) {
         .constraints([Constraint::Min(5), Constraint::Length(HUD_HEIGHT)])
         .split(area);
 
-    render_viewport(frame, chunks[0], world, stars, dense);
+    render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names);
     render_hud(frame, chunks[1], world);
 }
 
-fn render_viewport(frame: &mut Frame, area: Rect, world: &World, stars: &[Vec3], dense: bool) {
+fn render_viewport(
+    frame: &mut Frame,
+    area: Rect,
+    world: &World,
+    stars: &[Vec3],
+    dense: bool,
+    show_orrery: bool,
+    show_names: bool,
+) {
+    if show_orrery {
+        crate::ui::orrery::render_orrery(frame, area, world, show_names);
+        return;
+    }
+
     let w_dots = area.width as u32 * 2;
     let h_dots = area.height as u32 * 4;
-
     if w_dots == 0 || h_dots == 0 {
         return;
     }
@@ -44,12 +63,16 @@ fn render_viewport(frame: &mut Frame, area: Rect, world: &World, stars: &[Vec3],
     let mut canvas = BrailleCanvas::new(w_dots, h_dots);
     draw_stars(&mut canvas, &camera, stars, dense);
     draw_scene(&mut canvas, &camera, world);
+    draw_junk(&mut canvas, &camera, world.player.vel, world.abs_t);
 
     let lines: Vec<Line> = canvas.rows().into_iter().map(Line::from).collect();
     frame.render_widget(Paragraph::new(lines), area);
 
-    // Console overlay: green messages at the bottom-left of the viewport.
     render_console_overlay(frame, area, world);
+
+    if show_names {
+        render_3d_name_overlays(frame, area, world, &camera);
+    }
 }
 
 fn render_hud(frame: &mut Frame, area: Rect, world: &World) {
@@ -131,12 +154,60 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World) {
     let msg = if !world.message.text.is_empty() {
         world.message.text.lines().next().unwrap_or("").to_string()
     } else {
-        format!(" {}  [WASD/IJKL fly  SPC fire  Q quit]", world.mission_file)
+        format!(" {}  [WASD/IJKL fly  SPC fire  O orrery  N names  Q quit]", world.mission_file)
     };
     lines.push(Line::from(msg));
 
     let block = Block::default().borders(Borders::ALL).title(" HUD ");
     frame.render_widget(Paragraph::new(lines).block(block), area);
+}
+
+/// Overlay planet/target names on the 3D viewport using projected positions.
+fn render_3d_name_overlays(frame: &mut Frame, area: Rect, world: &World, camera: &Camera) {
+    // Planets — cyan labels.
+    for planet in &world.planets {
+        if planet.hidden || planet.radius <= 0.0 {
+            continue;
+        }
+        if let Some((dx, dy)) = camera.project_point(planet.pos) {
+            let cell_x = area.x + (dx / 2) as u16 + 1;
+            let cell_y = area.y + (dy / 4) as u16;
+            let w = planet.name.len() as u16;
+            if cell_y < area.y + area.height && cell_x + w <= area.x + area.width {
+                let r = Rect { x: cell_x, y: cell_y, width: w, height: 1 };
+                frame.render_widget(
+                    Paragraph::new(Span::styled(
+                        planet.name.clone(),
+                        Style::default().fg(Color::Cyan),
+                    )),
+                    r,
+                );
+            }
+        }
+    }
+
+    // Active targets — red (enemy) or green (friendly).
+    for target in &world.targets {
+        if target.age <= 0.0 || target.hidden {
+            continue;
+        }
+        if let Some((dx, dy)) = camera.project_point(target.pos) {
+            let cell_x = area.x + (dx / 2) as u16 + 1;
+            let cell_y = area.y + (dy / 4) as u16;
+            let w = target.name.len() as u16;
+            if cell_y < area.y + area.height && cell_x + w <= area.x + area.width {
+                let color = if target.friendly { Color::Green } else { Color::Red };
+                let r = Rect { x: cell_x, y: cell_y, width: w, height: 1 };
+                frame.render_widget(
+                    Paragraph::new(Span::styled(
+                        target.name.clone(),
+                        Style::default().fg(color),
+                    )),
+                    r,
+                );
+            }
+        }
+    }
 }
 
 fn render_console_overlay(frame: &mut Frame, area: Rect, world: &World) {

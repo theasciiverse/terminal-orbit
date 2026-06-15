@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use crate::combat::explosions::{draw_booms, draw_missiles};
 use crate::math::Vec3;
 use crate::model::Model;
@@ -34,6 +36,33 @@ pub fn draw_target_ship(canvas: &mut BrailleCanvas, camera: &Camera, target: &Ta
 /// Transform a model-space vertex to world space using the target's orientation matrix.
 fn model_to_world(v: Vec3, t: &Target) -> Vec3 {
     t.pos + t.view * v.x + t.right * v.y + t.up * v.z
+}
+
+/// 8 debris dots orbiting the viewport center, drifting opposite to the
+/// player's velocity.  Gives a parallax cue for Newtonian motion.
+pub fn draw_junk(canvas: &mut BrailleCanvas, camera: &Camera, player_vel: Vec3, t: f64) {
+    let v_r = player_vel.dot(camera.right);
+    let v_u = player_vel.dot(camera.up);
+
+    let w = camera.w_dots as f64;
+    let h = camera.h_dots as f64;
+    let spread = w.min(h) * 0.38;
+    let cx = w / 2.0;
+    let cy = h / 2.0;
+
+    for i in 0..8 {
+        let angle = i as f64 * PI / 4.0;
+        // Base position on a ring around the viewport center.
+        let base_x = cx + angle.cos() * spread;
+        let base_y = cy - angle.sin() * spread;
+        // Drift: move opposite to velocity so debris appears to flow past.
+        // rem_euclid wraps the accumulated drift within the viewport.
+        let dx = (-v_r * t * 2.5).rem_euclid(w);
+        let dy = (v_u * t * 2.5).rem_euclid(h);
+        let x = (base_x + dx).rem_euclid(w) as u32;
+        let y = (base_y + dy).rem_euclid(h) as u32;
+        canvas.set(x, y);
+    }
 }
 
 /// Project and draw one world-space edge onto the braille canvas.
