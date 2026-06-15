@@ -1,0 +1,131 @@
+/*
+ *  Just go get some guys at Dione and Mimas
+ */
+
+Verbose
+
+/* Set up player */
+Cursor { Titan +10500 }
+Player { }
+
+/* Titan Base */
+Include titanbase.inc
+
+/* Bad guys at Dione */
+Cursor { Dione +5000 }
+Object { Name Fighter1 Model light2.tri Strategy Hunt1 Score 1 }
+Cursor { +1000 }
+Object { Name Fighter2 Model light2.tri Strategy Hunt1 Score 1 }
+Cursor { -500 +700 }
+Object { Name Fighter3 Model light2.tri Strategy Hunt1 Score 1 }
+
+/* And at Mimas */
+Cursor { Mimas +5000 }
+Object { Name Fighter4 Model light1.tri Hidden Strategy Hunt1 Score 1 }
+Cursor { +1000 }
+Object { Name Fighter5 Model light1.tri Hidden Strategy Hunt1 Score 1 }
+Cursor { -500 +700 }
+Object { Name Fighter6 Model light1.tri Hidden Strategy Hunt1 Score 1 }
+
+/* And at Tethys */
+Cursor { Tethys +5000 }
+Object { Name Fighter7 Model light2.tri Hidden Strategy Hunt1 Score 1 }
+Cursor { +1000 }
+Object { Name Fighter8 Model light2.tri Hidden Strategy Hunt1 Score 1 }
+Cursor { -500 +700 }
+Object { Name Fighter9 Model light2.tri Hidden Strategy Hunt1 Score 1 }
+/* Briefing */
+Briefing
+{
+	Mission: Saturn Sweep\\
+	More alien activity as been detected near the moon Dione.\\
+	Your mission is to approach Dione and destroy any and all
+	alien forces.\\
+	Gook luck!
+}
+
+/* Load next mission */
+Event
+{
+	Name LoadNext
+	Disabled
+	Trigger Alarm
+	Value 10
+
+	Action LoadMission
+	Value saturn01.msn
+}
+
+/* Return to base */
+Cursor { Titan +10000 }
+Event
+{
+	Name return
+	Trigger StopNear
+	Value 1000
+	Disabled
+
+	Action Enable
+	Value LoadNext
+
+	Action Message
+	Value
+	{
+		[Titan Base] Mission Successful!  Await further orders.
+	}
+}
+
+/* Win */
+Event
+{
+	Trigger Score
+	Value 9
+
+	Action Message
+	Value
+	{
+		[computer] Mission complete.  Return to base.
+	}
+
+	Action Enable
+	Value return
+}
+
+/* Got the first three guys */
+Event
+{
+	Trigger Score
+	Value 3
+
+	/* Unhide guys at Mimas */
+	Action Unhide Value Fighter4
+	Action Unhide Value Fighter5
+	Action Unhide Value Fighter6
+
+	Action Message
+	Value
+	{
+		[Titan Base] Good work!  We have a new report of
+		enemy activity at Mimas.  Proceed to Mimas and
+		eliminate all alien forces.
+	}
+}
+
+/* Got the next three guys */
+Event
+{
+	Trigger Score
+	Value 6
+
+	/* Unhide guys at Tethys */
+	Action Unhide Value Fighter7
+	Action Unhide Value Fighter8
+	Action Unhide Value Fighter9
+
+	Action Message
+	Value
+	{
+		[Titan Base] Nice shooting!  Proceed now to
+		the moon Tethys and kick some more alien butt!
+	}
+}

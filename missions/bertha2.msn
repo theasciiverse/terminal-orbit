@@ -1,0 +1,150 @@
+/*
+ *  Use Bertha to knock 'em out
+ */
+
+Verbose
+
+Include marssci.inc
+Waypoint { }
+
+Cursor { MarsSci -700 +200 }
+Player { }
+
+Briefing
+{
+	Mission:  Big Bertha\\
+	This is it!  Your mission is to patrol your waypoints and
+	knock out all four alien solar collectors.\\
+	Don't forget Bertha's short range and long recharge time.  If
+	you use any other weapon you will need to wait a full minute
+	for Bertha to recharge.\\
+	Okay, now go kick some alien butt and let's blow this joint!
+}
+
+/* Bertha Butt, of the Butt sisters */
+Include bertha.inc
+
+/* Waypoint 2 */
+Cursor { 0 0 0 }
+Cursor { +10000000 +0 +0 }
+Waypoint { }
+Include coll3.inc
+Include squad1.inc
+
+/* Waypoint 3 */
+Cursor { 0 0 0 }
+Cursor { +0 +10000000 +0 }
+Waypoint { }
+Include coll3.inc
+Include squad2.inc
+Cursor { -4000 }
+Object
+{
+	Name Destroyer
+	Model dest1.tri
+	Strategy Hunt3
+	TurnRate 0.1
+	Speed 0.01
+	MaxShields 200
+	Weapon 2
+}
+
+/* Waypoint 4 */
+Cursor { 0 0 0 }
+Cursor { -10000000 +0 +0 }
+Waypoint { }
+Include coll3.inc
+Include squad3.inc
+
+/* Waypoint 5 */
+Cursor { 0 0 0 }
+Cursor { +0 -10000000 +0 }
+Waypoint { }
+Include coll3.inc
+Include squad4.inc
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value pluto1.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Break out the champagne!  The aliens are
+		retreating!
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 4
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

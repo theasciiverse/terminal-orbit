@@ -1,0 +1,191 @@
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { IoBase -700 +200 }
+Player { }
+
+Briefing
+{
+	Mission:  Uranus Sweep\\
+	The captured alien pilot has revealed the presence of
+	an alien reserve fleet in the Uranus system.\\
+	Your mission is to explore each of the five moons in the
+	Uranus system and eliminate all alien vessels.\\
+	Be sure to visit all five moons!
+}
+
+/* Miranda */
+Cursor { Miranda }
+Waypoint { }
+Cursor { +1000 +3000 -2000 }
+Cursor { +0 +0 +3000 }
+Object { Name Alpha1 Model medium1.tri Strategy hunt4 Score 1 }
+Cursor { +0 +0 -3000 }
+Cursor { -2000 +0 -2000 }
+Object { Name Alpha2 Model medium1.tri Strategy hunt4 Score 1 }
+Cursor { +2000 +0 +2000 }
+Cursor { +2000 +0 -2000 }
+Object { Name Alpha3 Model medium1.tri Strategy hunt4 Score 1 }
+
+/* Ariel */
+Cursor { Ariel }
+Waypoint { }
+Cursor { -3000 +2000 -4000 }
+Cursor { +0 +0 +3000 }
+Object { Name Beta1 Model light1.tri Strategy hunt3 Score 1 }
+Cursor { +0 +0 -3000 }
+
+Cursor { -2000 -2000 -2000 }
+Object { Name Beta2 Model light1.tri Strategy hunt3 Score 1 }
+Cursor { +2000 +2000 +2000 }
+
+Cursor { +2000 -2000 -2000 }
+Object { Name Beta3 Model light2.tri Strategy hunt4 Score 1 }
+Cursor { -2000 +2000 +2000 }
+
+Weapon
+{
+	Index 9
+	Yield 30
+	Color 0x00ffff
+	Renderer 2
+}
+
+Cursor { +0 +2000 -2000 }
+Object { Name BetaAce Model heavy1.tri Strategy hunt4 Weapon 9 Score 1 }
+Cursor { +0 -2000 +2000 }
+
+/* Umbriel */
+Cursor { Umbriel }
+Waypoint { }
+
+/* Titania */
+Cursor { Titania }
+Waypoint { }
+Cursor { -3000 +4000 -2000 }
+
+Object
+{
+	Name Transport
+	Model trans1.tri
+	Strategy DoNothing
+	Maxshields 400
+	Score 1
+}
+
+Cursor { +0 +0 +3000 }
+Object { Name Gamma1 Model heavy1.tri Strategy hunt3 Score 1 }
+Cursor { +0 +0 -3000 }
+
+Cursor { -2000 -2000 -2000 }
+Object { Name Gamma2 Model heavy1.tri Strategy hunt4 Score 1 }
+Cursor { +2000 +2000 +2000 }
+
+Cursor { +2000 -2000 -2000 }
+Object { Name Gamma3 Model heavy1.tri Strategy hunt3 Score 1 }
+Cursor { -2000 +2000 +2000 }
+
+Cursor { +0 +2000 -2000 }
+Object { Name GammaAce Model heavy1.tri Strategy hunt4 Weapon 9 }
+Cursor { +0 -2000 +2000 }
+
+/* Oberon */
+Cursor { Oberon }
+Waypoint { }
+Cursor { -4000 +2000 +3000 }
+Cursor { +0 +0 +3000 }
+Object { Name Delta1 Model light2.tri Strategy hunt3 Score 1 }
+Cursor { +0 +0 -3000 }
+Cursor { -2000 +0 -2000 }
+Object { Name Delta2 Model light2.tri Strategy hunt4 Score 1 }
+Cursor { +2000 +0 +2000 }
+Cursor { +2000 +0 -2000 }
+Object { Name Delta3 Model light2.tri Strategy hunt3 Score 1 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value neptune1.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 14
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

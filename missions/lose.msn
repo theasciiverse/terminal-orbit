@@ -1,0 +1,35 @@
+/*
+ *  No dance tonight
+ */
+
+Verbose
+
+Cursor { Earth -10000 }
+Player { }
+
+Briefing
+{
+	All is lost.\\
+	Due to your failure to control the alien menace, humanity
+	has been enslaved, aliens rule the solar system, and all
+	copies of Quake 3 have been confiscated.\\
+	No dance tonight.\\
+	You can press 'L' to load a previous mission and try again.
+}
+
+Cursor { Earth }
+Event
+{
+	Trigger Alarm
+	Value 10
+
+	Action Boom
+	Value 20
+
+	Action HidePlanet
+	Value Earth
+
+	Action Message
+	Value { Boom! Earth has been destroyed! }
+}
+

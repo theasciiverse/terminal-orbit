@@ -1,0 +1,147 @@
+/*
+ *  Destroy alien base at Venus
+ */
+
+Verbose
+
+Include marssci.inc
+Waypoint { }
+
+/* Player */
+Cursor { -700 +200 }
+Player { }
+
+/* Solar collector */
+Cursor { MarsSci +5000 +0 -5000 }
+Include coll1.inc
+
+Briefing
+{
+	Mission:  Venus Base\\
+	The alien plan is clear: Those devices are huge solar energy
+	collectors.  The aliens plan to build dozens of them and tap the
+	Sun's energy, leaving the rest of the planets in shadow.\\
+	They must be stopped!\\
+	The alien plans are being coordinated from a base orbitting
+	Venus.  Proceed to Venus and destroy the base.
+}
+
+Cursor { Venus }
+Waypoint { }
+Cursor { -10000 +2000 -1000 }
+Include squad3.inc
+Object
+{
+	Name Base
+	Model base2.tri
+        Strategy DoNothing
+        MaxShields 500
+        Score 1
+}
+
+
+/* Bogus object so base can shoot */
+Cursor { Base }
+Object
+{
+        Name BaseGun
+        Invisible
+        Model null.tri
+        Strategy Sit2
+        Weapon 9
+}
+
+/* Destroy gun when base is destroyed */
+Event
+{
+        Trigger Destroy
+        Value Base
+
+        Action Destroy
+        Value BaseGun
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value mars4.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

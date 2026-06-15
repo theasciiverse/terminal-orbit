@@ -1,0 +1,161 @@
+
+/*
+ *  Artifact at Iapetus
+ */
+
+Verbose
+
+/* Titan Base */
+Include titanbase.inc
+
+/* Player */
+Cursor { TitanBase -1000 }
+Player { }
+
+Briefing
+{
+	Mission: You can't take it with you\\
+	The aliens have left the Saturn system, but they left behind
+	some sort of artifact in the vicinity of Iapetus, a remote,
+	distant moon of Saturn.\\
+	Your mission is to proceed to Iapetus (which may be difficult
+	to find) and retrieve the artifact.  You will need to stop
+	within 500 kilometers of the object to retrieve it.
+}
+
+Cursor { Iapetus +200 +4000 }
+Object
+{
+	Name Artifact
+	Model artifact1.tri
+	Strategy DoNothing
+	MaxShields 1
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value jupiter1.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 15.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { TitanBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[TitanBase] Mission failed!  That artifact might have
+		provided vital information.
+	}
+}
+
+Event
+{
+	Trigger Destroy
+	Value Artifact
+
+	Action Enable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission failed.  Return to base.
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value e1
+
+	Action Message
+	Value
+	{
+		[TitanBase] Great job!  Technicians are already
+		retrieving vital information from the artifact.  Stand
+		by...
+	}
+}
+
+Event
+{
+	Name e1
+	Disabled
+	Trigger Alarm
+	Value 15
+
+	Action Message
+	Value
+	{
+		[TitanBase] Bad news!  The alien incursion to Saturn
+		was just a diversion to cover their fleet's approach
+		to the Jupiter system.  Await further orders.
+	}
+
+	Action Enable
+	Value loadsuccess
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Cursor { Artifact }
+Event
+{
+	Trigger StopNear
+	Value 500
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Hide
+	Value Artifact
+
+	Action Message
+	Value
+	{
+		[computer] Artifact retrieved.  Return to base.
+	}
+
+	Action Flash
+}
+

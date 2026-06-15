@@ -1,0 +1,139 @@
+/*
+ *  Destroy alien transport
+ */
+
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { -1000 }
+Player { }
+
+Briefing
+{
+	Mission:  The Bigger They Are.\\
+	Intelligence reports suggest the presence of a large alien
+	transport in the vicinity of Jupiter.  The supplies carried
+	by this ship must not be allowed to reach the alien forces.\\
+	Your mission is to patrol your waypoints, find the transport,
+	and destroy it.\\
+	Good luck!
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value jupiter5.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed!  You didn't destroy the alien
+		transport.
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  The nasties will be
+		hurting without those supplies.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.
+	}
+}
+
+/* Waypoint 1 */
+
+Cursor { Jupiter -150000 +0 -15000 }
+Waypoint { }
+Include squad1.inc
+
+/* Waypoint 2 */
+Cursor { Jupiter +150000 +0 +25000 }
+Waypoint { }
+Include squad2.inc
+
+/* Waypoint 3 */
+Cursor { Jupiter +3000 -9000 +150000 }
+Waypoint { }
+Object
+{
+	Name Transport
+	Model trans1.tri
+	Strategy DoNothing
+	Maxshields 400
+	Score 1
+}
+Include squad3.inc
+
+/* Waypoint 4 */
+Cursor { Jupiter -9000 +6000 -150000 }
+Waypoint { }
+Include squad4.inc
+

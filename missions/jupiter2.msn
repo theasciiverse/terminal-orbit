@@ -1,0 +1,261 @@
+/*
+ *  Defend freighters
+ */
+
+Verbose
+
+/* Io base */
+Include iobase.inc
+Waypoint { }
+
+Event
+{
+	Trigger Depart
+	Value 20000
+
+	Action Enable
+	Value returnfailure
+}
+
+/* Player */
+Cursor { -1000 }
+Player { }
+
+Briefing
+{
+	Mission: Jovian Patrol\\
+	The alien presence is heavy in this system.  Your mission is
+	to patrol your waypoints, eliminate any enemy forces, and defend
+	any allied units you encounter.\\
+	Good luck!  Don't forget to patrol all your waypoints.
+}
+
+/*
+ *  First waypoint
+ */
+Cursor { Europa +30000 -3000 +6000 }
+Waypoint { }
+
+/* Bad guys */
+Cursor { +0 +2000 }
+Object { Name Fighter1 Model light1.tri Strategy hunt1 }
+Cursor { +200 -2000 -1000 }
+Object { Name Fighter2 Model light1.tri Strategy hunt1 }
+Cursor { -300 +3000 +2000 }
+Object { Name Fighter3 Model light1.tri Strategy hunt1 }
+
+/*
+ *  Second waypoint
+ */
+Cursor { Europa -20000 +4000 -10000 }
+Waypoint { }
+
+/* Bad guys */
+Cursor { +0 +1000 }
+Object { Name Ace1 Model medium1.tri Strategy hunt2 weapon 3 }
+Cursor { +100 -2000 }
+Object { Name Fighter4 Model light2.tri Strategy hunt1 }
+
+/*
+ *  Third waypoint
+ */
+Cursor { Ganymede -10000 -15000 +20000 }
+Waypoint { }
+
+/* Event for getting here */
+Event
+{
+	Trigger Approach
+	Value 10000
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[Niven] This is the allied freighter Niven.  We are
+		carrying vital medical supplies to colonists on
+		Ganymede.  We are under attack!  Please help!
+	}
+}
+
+/* Good guys */
+Cursor { +1000 }
+Object
+{
+	Name Niven
+	Model freight1.tri
+	Strategy DoNothing
+	Maxshields 300
+	Friendly
+}
+
+Cursor { -1500 +200 +300 }
+Object
+{
+	Name Pilgrim
+	Model freight1.tri
+	Strategy DoNothing
+	Maxshields 300
+	Friendly
+}
+
+/* Bad guys */
+Cursor { +9000 }
+Object
+{
+	Name Fighter5
+	Model medium1.tri
+	Strategy hunt3
+	Score 1
+}
+
+Cursor { +0 +1000 }
+Object
+{
+	Name Fighter6
+	Model medium1.tri
+	Strategy hunt3
+	Score 1
+}
+
+Cursor { +1000 -1000 }
+Object
+{
+	Name Fighter7
+	Model medium1.tri
+	Strategy hunt3
+	Score 1
+}
+
+Cursor { +500 +500 }
+Object
+{
+	Name Fighter8
+	Model medium1.tri
+	Strategy hunt3
+	Score 1
+}
+
+Event
+{
+	Name gotem
+
+	Trigger Score
+	Value 4
+
+	Action Enable
+	Value returnsuccess
+
+	Action Message
+	Value
+	{
+		[Niven] Thanks for the help!
+	}
+}
+
+Event
+{
+	Name destroy1
+
+	Trigger Destroy
+	Value Niven
+
+	Action Enable
+	Value returnfailure
+
+	Action Disable
+	Value gotem
+
+	Action Message
+	Value
+	{
+		[computer] Mission failed.
+	}
+
+	Action Disable
+	Value destroy2
+}
+
+Event
+{
+	Name destroy2
+
+	Trigger Destroy
+	Value Pilgrim
+
+	Action Enable
+	Value returnfailure
+
+	Action Disable
+	Value gotem
+
+	Action Message
+	Value
+	{
+		[computer] Mission failed.
+	}
+
+	Action Disable
+	Value destroy1
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value jupiter3.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value jupiter4.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed!  Await further orders.
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  Await further orders.
+	}
+}
+
+

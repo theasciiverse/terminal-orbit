@@ -1,0 +1,228 @@
+/*
+ *  Alien base at Neptune
+ */
+
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { +700 -200 }
+Player { }
+
+Briefing
+{
+	Mission:  Neptune Base\\
+	The aliens have a large base hidden in the rings of Neptune.
+	The base is sure to be heavily shielded and
+	well defended.  It must be destroyed.\\
+	Your mission is to proceed to Neptune, find and eliminate the
+	alien base.
+}
+
+Weapon { Index 9 Yield 30 Color 0x00ffff Renderer 2 }
+
+/* Alien base */
+Cursor { Neptune +50000 +0 +1000 }
+Object
+{
+	Name Base
+	Model base2.tri
+	Strategy DoNothing
+	MaxShields 500
+	Score 1
+}
+
+/* Bogus object so base can shoot */
+Cursor { Base }
+Object
+{
+	Name BaseGun
+	Invisible
+	Model null.tri
+	Strategy Sit2
+	Weapon 9
+}
+
+/* Squadron */
+Include squad3.inc
+
+/* Destroy gun when base is destroyed */
+Event
+{
+	Trigger Destroy
+	Value Base
+
+	Action Destroy
+	Value BaseGun
+
+	Action Message
+	Value
+	{
+		[IoBase] Great job!  While you're there, check for
+		alien activity near the moon Triton.  The astrophysicists
+		have detected something strange in the area.
+	}
+
+	/* Unhide collector */
+	Action Unhide
+	Value ?
+}
+
+/* Under construction solar collector at Triton */
+Cursor { Triton +7000 +3000 -3000 }
+Object
+{
+	Name ?
+	Hidden
+	Model solar1.tri
+	Strategy DoNothing
+	ShieldRegen 1000
+}
+
+/* Message approaching collector */
+Event
+{
+	Trigger Approach
+	Value 5000
+
+	Action Message
+	Value
+	{
+		[IoBase] Good God, what is that thing?  It's huge!
+		Try to get a good look at it.
+	}
+
+	Action Enable
+	Value done
+}
+
+/* Okay, time to go home */
+Event
+{
+	Name done
+	Disabled
+	Trigger Alarm
+	Value 20
+
+	Action Score
+	Value 1
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+
+/* Make some fighters when we get close */
+Event
+{
+	Trigger Approach
+	Value 1500
+
+	Action Unhide
+	Value Alpha1
+	Action Unhide
+	Value Alpha2
+	Action Unhide
+	Value Alpha3
+	Action Unhide
+	Value Alpha4
+}
+
+Cursor { +0 +0 +3000 }
+Object { Name Alpha1 Model light1.tri Strategy hunt3 Hidden }
+Cursor { +0 +0 -3000 }
+
+Cursor { -2000 -2000 -2000 }
+Object { Name Alpha2 Model light1.tri Strategy hunt3 Hidden }
+Cursor { +2000 +2000 +2000 }
+
+Cursor { +2000 -2000 -2000 }
+Object { Name Alpha3 Model light2.tri Strategy hunt4 Hidden }
+Cursor { -2000 +2000 +2000 }
+
+Cursor { +0 +2000 -2000 }
+Object { Name AlphaAce Model heavy1.tri Strategy hunt4 Weapon 9 Hidden }
+Cursor { +0 -2000 +2000 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value neptune2.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 2
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+}
+

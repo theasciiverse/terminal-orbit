@@ -1,0 +1,154 @@
+/*
+ *  Test out the new weapon
+ */
+
+Verbose
+
+Include marssci.inc
+Waypoint { }
+
+/* Player */
+Cursor { MarsSci -700 +200 }
+Player { }
+
+/* Collector */
+Cursor { MarsSci +5000 +0 -5000 }
+Include coll1.inc
+
+Briefing
+{
+	Mission:  Bertha Test Drive\\
+	Good news!  The weapons folks have developed a weapon which
+	should be able to destroy the alien solar collectors.  It has
+	been installed on your ship and is named "Bertha".\\
+	Keep in mind that Bertha takes a full minute to recharge.  You
+	will need to wait a full minute after firing Bertha (or any
+	other weapon) before Bertha will be ready to fire again.\\
+	Bertha also travels very slowly and has a very short range.\\
+	Your mission is to try out Bertha on the collector we retrieved
+	from the aliens.\\
+	Cross your fingers!
+}
+
+/* Bertha */
+Include bertha.inc
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value bertha2.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 2000
+
+	Action Enable
+	Value returnfailure
+}
+
+Cursor { Collector }
+Event
+{
+	Trigger Destroy
+	Value Collector
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Boom
+	Value 10
+
+	Action Enable
+	Value boom2
+}
+
+Event
+{
+	Name boom2
+	Disabled
+
+	Trigger Alarm
+	Value 2
+
+	Action Enable
+	Value boom3
+
+	Action Boom
+	Value 5
+
+	Action Message
+	Value
+	{
+		[MarsSci] YEE HAH!!!  Can't wait to see the alien scum
+		eat that!
+	}
+}
+
+Event
+{
+	Name boom3
+	Disabled
+
+	Trigger Alarm
+	Value 2
+
+	Action Boom
+	Value 3
+}
+

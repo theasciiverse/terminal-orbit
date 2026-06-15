@@ -1,0 +1,174 @@
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { IoBase -700 +200 }
+Player { }
+
+Briefing
+{
+	Mission:  Jovian Cleanup\\
+	The aliens have nearly been eliminated from the Jupiter system.
+	Your mission is to patrol the moons Europa, Ganymede, and Callisto.
+	Eliminate any remaining hostile ships in the area.\\
+	Good hunting!
+}
+
+/* Waypoint 1 -- Europa */
+Cursor { Europa }
+Waypoint { }
+Cursor { +6000 -3000 +1000 }
+Include squad1.inc
+
+/* Waypoint 2 -- Ganymede */
+Cursor { Ganymede }
+Waypoint { }
+Cursor { -7000 +3000 -4000 }
+Include squad4.inc
+
+/* Waypoint 3 -- Callisto and ejected pilot */
+Cursor { Callisto }
+Waypoint { }
+Cursor { +4000 +2000 -8000 }
+Include squad4.inc
+
+/* Ejected pilot */
+Object
+{
+	Name EjectedPilot
+	Model eject1.tri
+	Strategy DoNothing
+	MaxShields 1
+}
+
+Cursor { EjectedPilot }
+
+/* Message when approaching pilot */
+Event
+{
+	Trigger Approach
+	Value 10000
+
+	Action Message
+	Value
+	{
+		[IoBase] Important!  Pick up that ejected pilot before the
+		aliens can.
+	}
+}
+
+/* Badness if pilot destroyed */
+Event
+{
+	Trigger Destroy
+	Value EjectedPilot
+
+	Action Message
+	Value
+	{
+		[computer] Mission failed.
+	}
+}
+
+/* Picking up pilot */
+Event
+{
+	Trigger StopNear
+	Value 500
+
+	Action Hide
+	Value EjectedPilot
+
+	Action Flash
+
+	Action Score
+	Value 1
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value uranus01.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  That alien pilot should
+		provide some very useful information.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Ejected pilot retrieved.  Proceed with mission.
+	}
+}
+

@@ -1,0 +1,167 @@
+/*
+ *  Go to titan Base, get message, return
+ */
+
+Verbose
+
+/* Set up player */
+Cursor { Earth +15000 }
+Player { }
+
+/* Set up Earth Base */
+Include earthbase.inc
+
+/* Set up Titan Base */
+Include titanbase.inc
+
+/* Briefing */
+Briefing
+{
+	ORBIT Episode One: In Defense Of Sol\\
+	Mission: Special Delivery\\
+	An important message must be delivered by hand from
+	Titan Base to Earth Base.\\
+	Titan is a large moon of the planet Saturn.\\
+	Your mission is to travel to Titan, rendezvous with
+	Titan Base, retrieve the message, and return it
+	safely to Earth base.\\
+	Good luck!
+}
+
+/* Give annoying message if he takes too long */
+Event
+{
+	Name annoy
+	Trigger Alarm
+	Value 120
+
+	Action Message
+	Value
+	{
+		[EarthBase] Well get going, Flyboy!  We don't have all
+		millenium!\\Type 'b' if you've forgotten the
+		mission objectives.
+	}
+}
+
+/* Disable annoying message when he gets going */
+Cursor { Earth }
+Event
+{
+	Trigger Depart
+	Value 100000
+
+	Action Disable
+	Value annoy
+
+	/* Enable failure return */
+	Action Enable
+	Value ReturnFailure
+}
+
+/* Give a little message when approaching Titan */
+Cursor { Titan +10000 }
+Event
+{
+	Trigger Approach
+	Value 50000
+
+	Action Message
+	Value
+	{
+		[computer] To rendezvous with Titan Base, you must come to
+		a complete stop within 1000 kilometers of the base.
+	}
+}
+
+/* Start retrieving message */
+Event
+{
+	Trigger StopNear
+	Value 1000
+
+	Action Stop
+
+	Action Message
+	Value
+	{
+		[computer] Retrieving message...
+	}
+
+	Action Enable
+	Value e1
+}
+
+/* Get home */
+Event
+{
+	Name e1
+	Disabled
+	Trigger Alarm
+	Value 5
+
+	Action Message
+	Value
+	{
+		[computer] Message received.  Return to Earth Base.
+	}
+
+	Action Enable
+	Value ReturnSuccess
+
+	Action Disable
+	Value ReturnFailure
+}
+
+/* Success and failure events */
+Cursor { Earth +16000 }
+Event
+{
+	Name ReturnSuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Stop
+
+	Action Message
+	Value
+	{
+		Mission Successful!  Wait for next assignment.
+	}
+
+	Action Enable
+	Value loadnext
+}
+
+Event
+{
+	Name ReturnFailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Stop
+
+	Action Message
+	Value
+	{
+		Mission Failed!  Wait for next assignment.
+	}
+
+	Action Enable
+	Value loadnext
+}
+
+Event
+{
+	Name loadnext
+	Disabled
+
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value titan02.msn
+}
+

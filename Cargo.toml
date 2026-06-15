@@ -1,0 +1,18 @@
+[package]
+name = "terminal-orbit"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "terminal-orbit"
+path = "src/main.rs"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+drawille = "0.3"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+
+[dev-dependencies]
+approx = "0.5"

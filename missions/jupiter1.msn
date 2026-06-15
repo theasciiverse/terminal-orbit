@@ -1,0 +1,122 @@
+/*
+ *  Proceed to Jupiter
+ */
+
+Verbose
+
+/* Titan base */
+Include titanbase.inc
+
+Cursor { TitanBase -1000 }
+Player { }
+
+Briefing
+{
+	Mission:  Reassignment to Jupiter\\
+	The alien artifact is some sort of data storage device.
+	Information retrieved from the artifact reveals that the
+	entire alien presence in the Saturn system was a deception!\\
+	The aliens are planning a large invasion of the Jupiter
+	system.\\
+	Proceed to Io station (waypoint 1) immediately.
+}
+
+/* Io base */
+Include iobase.inc
+Waypoint { }
+
+Event
+{
+	Trigger Approach
+	Value 10000
+
+	Action Message
+	Value
+	{
+		[IoBase] Good to see you, sir.  The base is under attack!
+		She's about to blow!
+	}
+}
+
+/* Bad guys */
+Cursor { IoBase +2000 }
+Object { Name Fighter1 Model light2.tri Score 1 Strategy Hunt3 }
+Cursor { IoBase -2000 +1500 +300 }
+Object { Name Fighter2 Model light2.tri Score 1 Strategy Hunt3 }
+Cursor { IoBase +100 -2500 -400 }
+Object { Name Fighter3 Model light2.tri Score 1 Strategy Hunt3 }
+
+Cursor { IoBase }
+Event
+{
+	Name rendezvous
+
+	Trigger StopNear
+	Value 1000
+	Disabled
+
+	Action Enable
+	Value loadnext
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission successful.  Await further orders.
+	}
+}
+
+Event
+{
+	Name loadlose
+	Disabled
+
+	Trigger Alarm
+	Value 10
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Event
+{
+	Trigger Destroy
+	Value IoBase
+
+	Action Enable
+	Value loadlose
+
+	Action Message
+	Value
+	{
+		[IoBase] Augh!  We're hit!
+	}
+}
+
+Event
+{
+	Trigger Score
+	Value 3
+
+	Action Enable
+	Value rendezvous
+
+	Action Message
+	Value
+	{
+		[IoBase] Way to go!  The base is safe.  You're cleared
+		for docking.
+	}
+}
+
+Event
+{
+	Name loadnext
+
+	Disabled
+	Trigger Alarm
+	Value 10
+
+	Action LoadMission
+	Value jupiter2.msn
+}
+

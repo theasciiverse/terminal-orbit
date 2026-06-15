@@ -1,0 +1,155 @@
+/*
+ *  Go to Mars science station
+ */
+
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { -700 +200 }
+Player { }
+
+Include marssci.inc
+Waypoint { }
+
+Briefing
+{
+	Mission:  Inward to Mars\\
+	The alien construction appears to be some kind of energy
+	collection device.  It has been moved to the Mars Science
+	Station for further study.\\
+	Proceed to Mars and rendezvous with the Science Station.
+}
+
+/* Solar collector */
+Cursor { MarsSci +5000 +0 -5000 }
+Include coll1.inc
+
+/* Bad guys */
+Cursor { MarsSci +1000 +1000 +9000 }
+Cursor { +0 +0 +3000 }
+Object { Name Alpha1 Model light1.tri Strategy hunt3 Score 1 }
+Cursor { +0 +0 -3000 }
+
+Cursor { -2000 -2000 -2000 }
+Object { Name Alpha2 Model light1.tri Strategy hunt3 Score 1 }
+Cursor { +2000 +2000 +2000 }
+
+/* Destroyer */
+Cursor { MarsSci -1000 -1000 +8000 }
+Object
+{
+	Name Destroyer
+	Model dest1.tri
+	Strategy Hunt3
+	Score 1
+	TurnRate 0.1
+	Speed 0.001
+	MaxShields 200
+	Weapon 3
+}
+
+Weapon
+{
+	Index 9
+	Yield 30
+	Color 0x00ffff
+	Renderer 2
+}
+
+Cursor { +0 +2000 -2000 }
+Object { Name AlphaAce Model heavy1.tri Strategy hunt4 Weapon 9 Score 1 }
+Cursor { +0 -2000 +2000 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value mars2.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Welcome to Mars!  Stand by for further orders.
+	}
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+/* MarsSci is going down */
+Event
+{
+	Trigger Shields
+	Value { MarsSci 200 }
+
+	Action Message
+	Value
+	{
+		[MarsSci] She's breaking up!
+	}
+}
+
+/* Lose if MarsSci destroyed */
+Cursor { MarsSci }
+Event
+{
+	Trigger Destroy
+	Value MarsSci
+
+	Action Message
+	Value
+	{
+		[MarsSci] Augh!!!
+	}
+
+	Action Enable
+	Value loadfailure
+
+	Action Boom
+	Value 3.0
+}
+
+/* Got all the bad guys */
+Event
+{
+	Trigger Score
+	Value 4
+
+	Action Enable
+	Value returnsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Nice shooting!  The station is safe and you
+		are cleared to dock.
+	}
+}
+

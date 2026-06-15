@@ -1,0 +1,132 @@
+/*
+ *  Find alien comm station in saturn's rings
+ */
+
+Verbose
+
+/* Set up Titan Base */
+Include titanbase.inc
+
+/* Player */
+Cursor { TitanBase -1000 }
+Player { }
+
+Briefing
+{
+	Mission: Dead Ringer\\
+	Telemetry indicates that the aliens may be hiding
+	a communications station within the rings of Saturn.  The
+	tech guys say the most likely location is the
+	Cassini division, a wide gap in the rings.  The station is
+	probably heavily defended and shielded.
+	Your mission is to search the rings for the comm station
+	and, if it exists, destroy it.\\
+	Good hunting!
+}
+
+/* Bad guys */
+Cursor { Saturn +120000 }
+Object
+{
+	Name CommStation
+	Model comm1.tri
+	Strategy DoNothing
+	Score 1
+	MaxShields 500
+}
+
+Cursor { CommStation +0 +2000 }
+Object { Name Fighter1 Model light2.tri Strategy Hunt2 }
+Cursor { CommStation +0 -2000 }
+Object { Name Fighter2 Model light2.tri Strategy Hunt1 }
+Cursor { CommStation +0 +0 +2000 }
+Object { Name Fighter3 Model light2.tri Strategy Hunt2 }
+Cursor { CommStation +0 +0 -2000 }
+Object { Name Fighter4 Model light2.tri Strategy Hunt1 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value saturn03.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value saturn02.msn
+}
+
+Cursor { TitanBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[TitanBase] Mission failed! You didn't destory the comm
+		station. Await further orders.
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[TitanBase] Great job!  Without that comm station the
+		aliens will have a rough time.  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

@@ -1,0 +1,132 @@
+/*
+ *  Alien blockade at Ganymede
+ */
+
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { -1000 }
+Player { }
+
+Briefing
+{
+	Mission:  Ganymede Blockade\\
+	Due to our failure to defend the Ganymede medical freighters,
+	the aliens have set up an intense blockade of the moon.\\
+	Proceed to Ganymede and eliminate the blockade or the colonists
+	will perish.
+}
+
+/* Bad guys */
+Weapon
+{
+	Index 9
+	Yield 30
+	Color 0x00ffff
+	Renderer 2
+}
+
+Cursor { Ganymede +2000 +2000 +2000 }
+Object { Name Platform1 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede +2000 +2000 -2000 }
+Object { Name Platform2 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede +2000 -2000 +2000 }
+Object { Name Platform3 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede +2000 -2000 -2000 }
+Object { Name Platform4 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede -2000 +2000 +2000 }
+Object { Name Platform5 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede -2000 +2000 -2000 }
+Object { Name Platform6 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede -2000 -2000 +2000 }
+Object { Name Platform7 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+Cursor { Ganymede -2000 -2000 -2000 }
+Object { Name Platform8 Model platform.tri Strategy Sit2 Score 1 Weapon 9 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value jupiter3.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 8
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[Ganymede Colony] Thanks!  You saved our colony.
+	}
+}
+

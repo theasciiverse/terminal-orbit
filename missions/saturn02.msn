@@ -1,0 +1,126 @@
+/*
+ *  Comm station moved to Enceladus
+ */
+
+Verbose
+
+/* Set up Titan Base */
+Include titanbase.inc
+
+/* Player */
+Cursor { TitanBase -1000 }
+Player { }
+
+Briefing
+{
+	Mission: If At First\\
+	The aliens have moved the comm station to an orbit around the
+	moon Enceladus.  It is imperative that the station be destroyed!
+	Proceed to Enceladus and knock out that comm station.
+}
+
+/* Bad guys */
+Cursor { Enceladus +4000 -4000 +2000 }
+Object
+{
+	Name CommStation
+	Model comm1.tri
+	Strategy DoNothing
+	Score 1
+	MaxShields 500
+}
+
+Cursor { CommStation +0 +2000 }
+Object { Name Fighter1 Model light2.tri Strategy Hunt2 }
+Cursor { CommStation +0 -2000 }
+Object { Name Fighter2 Model light1.tri Strategy Hunt1 }
+Cursor { CommStation +0 +0 +2000 }
+Object { Name Fighter3 Model light2.tri Strategy Hunt2 }
+Cursor { CommStation +0 +0 -2000 }
+Object { Name Fighter4 Model light1.tri Strategy Hunt1 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value saturn04.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { TitanBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[TitanBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[TitanBase] Great job!  Without that comm station the
+		aliens will have a rough time.  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

@@ -1,0 +1,76 @@
+/*
+ *  Clean up Enceladus
+ */
+
+Verbose
+
+/* Set up Titan Base */
+Include titanbase.inc
+
+/* Player */
+Cursor { TitanBase -1000 }
+Player { }
+
+Briefing
+{
+	Mission: Saturn Cleanup\\
+	The last of the alien presence has been located near
+	Enceladus.  Proceed to the moon and eradicate the enemy.
+}
+
+/* Bad guys */
+Cursor { Enceladus +0 +0 +4000 }
+Object { Name Fighter1 Model medium1.tri Score 1 Strategy Hunt2 }
+Cursor { Enceladus +0 +0 -4000 }
+Object { Name Fighter2 Model medium1.tri Score 1 Strategy Hunt1 }
+Cursor { Enceladus +0 +4000 }
+Object { Name Fighter3 Model medium1.tri Score 1 Strategy Hunt2 }
+Cursor { Enceladus +0 -4000 }
+Object { Name Fighter4 Model medium1.tri Score 1 Strategy Hunt1 }
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value saturn04.msn
+}
+
+Cursor { TitanBase }
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[TitanBase] Nice job!  The aliens have been eliminated
+		completely from the Saturn system.
+	}
+}
+
+Event
+{
+	Trigger Score
+	Value 4
+
+	Action Enable
+	Value returnsuccess
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

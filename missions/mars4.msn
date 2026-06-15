@@ -1,0 +1,205 @@
+/*
+ *  Aliens attack Earth!
+ */
+
+Verbose
+
+Include marssci.inc
+Waypoint { }
+
+Include earthbase.inc
+Waypoint { }
+
+/* Player */
+Cursor { MarsSci -700 +200 }
+Player { }
+
+/* Solar collector */
+Cursor { MarsSci +5000 +0 -5000 }
+Include coll1.inc
+
+Briefing
+{
+	Mission:  Target: Earth\\
+	The aliens are attacking Earth!! Proceed at once to Earth
+	base and defend against the alien forces.
+}
+
+/* This should be a tough one:  put forces on two sides of earth base */
+Cursor { EarthBase +0 +0 +10000 }
+Object
+{
+	Name Destroyer1
+	Model dest1.tri
+	MaxShields 300
+	Weapon 3
+	TurnRate 0.1
+	Speed 0.02
+	Score 1
+	Strategy hunt4
+}
+
+Cursor { +0 +0 +3000 }
+Object { Name Alpha1 Model light2.tri Strategy hunt3 Score 1 }
+Cursor { +0 +0 -3000 }
+Cursor { -2000 +0 -2000 }
+Object { Name Alpha2 Model light2.tri Strategy hunt3 Score 1 }
+Cursor { +2000 +0 +2000 }
+Cursor { +2000 +0 -2000 }
+Object { Name Alpha3 Model light2.tri Strategy hunt3 Score 1 }
+
+/* And on other side */
+Cursor { EarthBase +0 +0 -10000 }
+Object
+{
+	Name Destroyer2
+	Model dest1.tri
+	MaxShields 300
+	Weapon 3
+	TurnRate 0.1
+	Speed 0.02
+	Score 1
+	Strategy hunt4
+}
+
+Cursor { +0 +0 +3000 }
+Object { Name Beta1 Model medium1.tri Strategy hunt4 Score 1 }
+Cursor { +0 +0 -3000 }
+Cursor { -2000 +0 -2000 }
+Object { Name Beta2 Model medium1.tri Strategy hunt4 Score 1 }
+Cursor { +2000 +0 +2000 }
+Cursor { +2000 +0 -2000 }
+Object { Name Beta3 Model medium1.tri Strategy hunt4 Score 1 }
+
+/* Fail if earthbase destroyed */
+Event
+{
+	Trigger Destroy
+	Value EarthBase
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[EarthBase] Aughh!!!
+	}
+}
+
+/* EarthBase is in trouble */
+Event
+{
+	Trigger Shields
+	Value { EarthBase 150 }
+
+	Action Message
+	Value
+	{
+		[EarthBase] We can't hold out much longer!
+	}
+}
+
+/* Upon approach to earth base */
+Cursor { EarthBase }
+Event
+{
+	Trigger Approach
+	Value 40000
+
+	Action Message
+	Value
+	{
+		[EarthBase] Help!  We're being attacked!
+	}
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value mars5.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission failed! 
+	}
+
+	Action Disable
+	Value gotem
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Name gotem
+
+	Trigger Score
+	Value 8
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[EarthBase] Thanks!  The earth is safe thanks to you!
+	}
+}
+

@@ -1,0 +1,137 @@
+/*
+ *  Defend Titan Base from the guys we missed at Rhea
+ */
+
+Verbose
+
+/* Set up player */
+Cursor { Titan +10500 }
+Player { }
+
+/* Titan Base */
+Include titanbase.inc
+
+/* Some bad guys */
+Cursor { +2000 }
+Cursor { TitanBase +2000 }
+Object
+{
+	Name Fighter1
+	Model light2.tri
+	Strategy Hunt3
+	Score 1
+}
+Cursor { -4000 }
+Cursor { TitanBase -2000 }
+Object
+{
+	Name Fighter2
+	Model light2.tri
+	Strategy Hunt1
+	Score 1
+}
+Cursor { +2000 +2000 }
+Object
+{
+	Name Fighter3
+	Model light2.tri
+	Strategy Hunt3
+	Score 1
+}
+Cursor { +0 -4000 }
+Object
+{
+	Name Fighter4
+	Model light2.tri
+	Strategy Hunt1
+	Score 1
+}
+
+Briefing
+{
+	Mission: Under Siege\\
+	Titan Base is under attack!\\
+	Destroy the alien hostiles to defend the base!
+}
+
+/* 180 seconds to win */
+Event
+{
+	Name boom
+	Trigger Alarm
+	Value 180
+
+	Action Destroy
+	Value TitanBase
+
+	Action Message
+	Value
+	{
+		[Titan Base] Auggh!!!  Tell my wife I...
+	}
+
+	Action Enable
+	Value LoadLose
+}
+
+/* About to lose the base */
+Event
+{
+	Name almost
+	Trigger Alarm
+	Value 120
+
+	Action Message
+	Value
+	{
+		[Titan Base] We can't hold out much longer!
+	}
+}
+
+/* Load losing mission */
+Event
+{
+	Name LoadLose
+	Disabled
+	Trigger Alarm
+	Value 5
+
+	Action LoadMission
+	Value lose.msn
+}
+
+/* Load next mission */
+Event
+{
+	Name LoadNext
+	Disabled
+	Trigger Alarm
+	Value 10
+
+	Action LoadMission
+	Value saturn01.msn
+}
+
+/* Win by getting all the bad guys */
+Event
+{
+	Trigger Score
+	Value 4
+
+	Action Message
+	Value
+	{
+		[Titan Base] You did it!  The base is safe.
+		Hold on for further orders.
+	}
+
+	Action Disable
+	Value boom
+
+	Action Disable
+	Value almost
+
+	Action Enable
+	Value LoadNext
+}
+

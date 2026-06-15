@@ -1,0 +1,132 @@
+/*
+ *  Training mission #04
+ */
+
+/* Verbose reporting from the mission loader */
+Verbose
+
+Cursor
+{
+	Earth -15000
+}
+
+/* Put player here */
+
+Player { }
+
+Cursor
+{
+	+0 +5000
+}
+
+Object
+{
+	Name Platform1
+	Model platform.tri
+	Score 1
+	Strategy Sit1
+}
+
+Cursor { +5000 -5000 }
+
+Object
+{
+	Name Platform2
+	Model platform.tri
+	Score 1
+	Strategy Sit1
+}
+
+Cursor { -5000 -5000 }
+
+Object
+{
+	Name Platform3
+	Model platform.tri
+	Score 1
+	Strategy Sit1
+}
+
+Cursor { +5000 -5000 }
+
+Object
+{
+	Name Platform4
+	Model platform.tri
+	Score 1
+	Strategy Sit1
+}
+
+Briefing
+{
+	Training Mission #04:  Deadly Ducks\\
+	There are four enemy targets nearby.  This time they are
+	armed and will fire upon you if you approach them.\\
+	Your mission is to destroy all four targets.
+}
+
+/* Disable usage message if they beat us to the punch */
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Disable
+	Value e1
+}
+
+Event
+{
+	Name e1
+	Trigger Alarm
+	Value 30.0
+
+	Action Message
+	Value
+	{
+		The 'u' key locks the closest enemy target.\\
+		The 'y' key cycles through visible enemy targets.
+	}
+}
+
+Event
+{
+	Trigger Score
+	Value 3
+
+	Action Message
+	Value
+	{
+		One more to go!
+	}
+}
+
+Event
+{
+	Trigger Score
+	Value 4
+
+	Action Message
+	Value
+	{
+		Success!  Now wait for further instructions.
+	}
+
+	Action Enable
+	value e2
+
+	Action Stop
+}
+
+Event
+{
+	Name e2
+	Disabled
+
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value titan01.msn
+}
+

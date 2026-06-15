@@ -1,0 +1,105 @@
+/*
+ *  Training mission #03
+ */
+
+/* Verbose reporting from the mission loader */
+Terse
+
+Cursor
+{
+	Earth -15000
+}
+
+/* Put player here */
+
+Player { }
+Waypoint { }
+
+Cursor
+{
+	+0 +5000
+}
+
+Object
+{
+	Name Target
+	Model platform.tri
+	Score 1
+	Strategy DoNothing
+}
+
+Briefing
+{
+	Training Mission #03:  Sitting Duck\\
+	In this mission you will become more familiar with your
+	ship's weapons systems.\\
+	There is a single target located not far from you.  It is
+	unarmed and will not attack you.  Your mission is to approach
+	and destroy this target.
+}
+
+/* Disable usage message if they beat us to the punch */
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Disable
+	Value e1
+}
+
+Event
+{
+	Name e1
+	Trigger Alarm
+	Value 30.0
+
+	Action Message
+	Value
+	{
+		Use the 'u' key to make the enemy ship your
+		currently locked target.  Your HUD now shows the
+		name, range (in kilometers), and shield status of
+		the locked target.\\
+		Turn toward the enemy ship.  It will be bracketed
+		by a red square.\\
+		Accelerate toward it,
+		and destroy it by firing upon it (using the joystick
+		fire button).\\
+		The yellow cross shows where to aim to most likely
+		hit the target.\\
+		You can use the 'w' to cycle through the available
+		weapons.
+	}
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Message
+	Value
+	{
+		Success!  Now wait for further instructions.
+	}
+
+	Action Enable
+	value e2
+
+	Action Stop
+}
+
+Event
+{
+	Name e2
+	Disabled
+
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value train04.msn
+}
+
+

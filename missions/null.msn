@@ -1,0 +1,20 @@
+/*
+ *  Null mission
+ */
+
+/* Verbose reporting from the mission loader */
+Verbose
+
+Cursor
+{
+	Earth -15000 -8000 -2000
+}
+
+/* Put player here */
+Player { }
+
+/* Mission briefing */
+Briefing
+{
+}
+

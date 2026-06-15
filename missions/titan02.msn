@@ -1,0 +1,206 @@
+/*
+ *  Go to titan Base, shoot some bad guys, back to Titan base
+ */
+
+Verbose
+
+/* Set up player */
+Cursor { Earth +15000 }
+Player { }
+
+/* Set up Earth Base */
+Include earthbase.inc
+
+/* Set up Titan Base */
+Include titanbase.inc
+
+/* Some bad guys */
+Cursor { Rhea +3000 }
+Object
+{
+	Name Platform1
+	Model platform.tri
+	Strategy Sit1
+	Score 1
+	Hidden
+}
+Cursor { Rhea -3000 }
+Object
+{
+	Name Platform2
+	Model platform.tri
+	Strategy Sit1
+	Score 1
+	Hidden
+}
+Cursor { Rhea +0 +3000 }
+Object
+{
+	Name Platform3
+	Model platform.tri
+	Strategy Sit1
+	Score 1
+	Hidden
+}
+
+/* Briefing */
+Briefing
+{
+	Mission: They're Here\\
+	The message from Titan Base contains some disturbing news:
+	An alien presence has been detected in the Saturn system.\\
+	You are being re-assigned to Titan Base.\\
+	Your mission is to rendezvous with Titan Base and await
+	further orders.\\
+	Good luck!
+}
+
+/* Give annoying message if he takes too long */
+Event
+{
+	Name annoy
+	Trigger Alarm
+	Value 120
+
+	Action Message
+	Value
+	{
+		[EarthBase] Well get going, Flyboy!  We don't have all
+		millenium!\\Type 'b' if you've forgotten the
+		mission objectives.
+	}
+}
+
+/* Disable annoying message when he gets going */
+Cursor { Earth }
+Event
+{
+	Trigger Depart
+	Value 100000
+
+	Action Disable
+	Value annoy
+}
+
+Cursor { Titan +10000 }
+
+/* Tell him what to do when he gets to the base */
+Event
+{
+	Trigger Approach
+	Value 1000
+
+	Action Stop
+
+	/* Unhide the targets */
+	Action Unhide Value Platform1
+	Action Unhide Value Platform2
+	Action Unhide Value Platform3
+
+	Action Message
+	Value
+	{
+		[Titan Base] Glad you're here!  The aliens have been
+		detected near the moon Rhea.  Your orders are to
+		proceed to Rhea, eliminate any hostile forces, and
+		return to Titan Base.
+	}
+
+	Action Enable
+	Value e1
+}
+
+/* Enable failure when leaving, after getting assignment */
+Event
+{
+	Name e1
+	Disabled
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value ReturnFailure
+}
+
+/* When he gets them all, allow success */
+Event
+{
+	Trigger Score
+	Value 3
+
+	Action Disable
+	Value ReturnFailure
+
+	Action Enable
+	Value ReturnSuccess
+
+	Action Message
+	Value
+	{
+		[Titan Base] Excellent work!  Now return to base.
+	}
+}
+
+/* Success and failure events */
+Event
+{
+	Name ReturnSuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Stop
+
+	Action Message
+	Value
+	{
+		Mission Successful!  Wait for next assignment.
+	}
+
+	Action Enable
+	Value loadsuccess
+}
+
+Event
+{
+	Name ReturnFailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Stop
+
+	Action Message
+	Value
+	{
+		Mission Failed!  Wait for next assignment.
+	}
+
+	Action Enable
+	Value loadfailure
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value dione01.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value titan03.msn
+}
+

@@ -1,0 +1,255 @@
+/*
+ *  Check out portal to alien system
+ */
+
+Verbose
+
+Include marssci.inc
+
+/* Player */
+Cursor { MarsSci -700 +200 }
+Player { }
+
+Briefing
+{
+	Mission:  Beam Me Up\\
+	The aliens have completely retreated from the solar system!\\
+	We tracked the aliens through some sort of portal orbiting
+	the planet Pluto.\\
+	Proceed to Pluto, locate the portal, and see if you can find
+	a way to use it to travel to the alien system.
+}
+
+Include bertha.inc
+
+/* Portal to other system */
+Cursor { Pluto +20000 +8000 -5000 }
+Object
+{
+	Name Portal
+	Model portal1.tri
+	Strategy DoNothing
+	MaxShields 500
+	ShieldRegen 1000
+}
+
+/* Some platforms protecting it */
+Cursor { +3000 +0 +0 }
+Object { Name Platform1 Model platform.tri Strategy Sit2 }
+Cursor { -6000 +0 +0 }
+Object { Name Platform2 Model platform.tri Strategy Sit2 }
+Cursor { +3000 +3000 +0 }
+Object { Name Platform3 Model platform.tri Strategy Sit2 }
+Cursor { +0 -6000 +0 }
+Object { Name Platform4 Model platform.tri Strategy Sit2 }
+
+/* We steal Mercury for the alien homeworld */
+Cursor { Pluto }
+Planet
+{
+	Name Mercury
+	NewName AlienHomeworld
+	Radius 5000
+	Map fractal1.ppm
+	Reposition
+	Hidden
+}
+
+/* Pass through the portal *out* */
+Cursor { Portal }
+Event
+{
+	Trigger Approach
+	Value 200
+
+	Action Flash
+
+	Action Score
+	Value 1
+
+	Action Enable
+	Value e1
+
+	/* Reveal alien homeworld */
+	Action UnhidePlanet
+	Value AlienHomeworld
+
+	/* Hide all other planets */
+	Action HidePlanet Value Sol
+	Action HidePlanet Value Venus
+	Action HidePlanet Value Earth
+	Action HidePlanet Value Moon
+	Action HidePlanet Value Mars
+	Action HidePlanet Value Deimos
+	Action HidePlanet Value Phobos
+	Action HidePlanet Value Jupiter
+	Action HidePlanet Value Io
+	Action HidePlanet Value Ganymede
+	Action HidePlanet Value Callisto
+	Action HidePlanet Value Europa
+	Action HidePlanet Value Saturn
+	Action HidePlanet Value Mimas
+	Action HidePlanet Value Enceladus
+	Action HidePlanet Value Tethys
+	Action HidePlanet Value Dione
+	Action HidePlanet Value Rhea
+	Action HidePlanet Value Titan
+	Action HidePlanet Value Iapetus
+	Action HidePlanet Value Uranus
+	Action HidePlanet Value Ariel
+	Action HidePlanet Value Titania
+	Action HidePlanet Value Oberon
+	Action HidePlanet Value Neptune
+	Action HidePlanet Value Triton
+	Action HidePlanet Value Proteus
+	Action HidePlanet Value Pluto
+	Action HidePlanet Value Charon
+	Action HidePlanet Value Sol
+}
+
+/* Get far enough away to reset portal */
+Event
+{
+	Name e1
+	Disabled
+
+	Trigger Depart
+	Value 3000
+
+	Action Enable
+	Value return
+}
+
+/* Back through portal */
+Event
+{
+	Name return
+	Disabled
+
+	Trigger Approach
+	Value 200
+
+	Action Flash
+
+	/* Hide alien world */
+	Action HidePlanet
+	Value AlienHomeworld
+
+	/* Show all others */
+	Action UnHidePlanet Value Sol
+	Action UnHidePlanet Value Venus
+	Action UnHidePlanet Value Earth
+	Action UnHidePlanet Value Moon
+	Action UnHidePlanet Value Mars
+	Action UnHidePlanet Value Deimos
+	Action UnHidePlanet Value Phobos
+	Action UnHidePlanet Value Jupiter
+	Action UnHidePlanet Value Io
+	Action UnHidePlanet Value Ganymede
+	Action UnHidePlanet Value Callisto
+	Action UnHidePlanet Value Europa
+	Action UnHidePlanet Value Saturn
+	Action UnHidePlanet Value Mimas
+	Action UnHidePlanet Value Enceladus
+	Action UnHidePlanet Value Tethys
+	Action UnHidePlanet Value Dione
+	Action UnHidePlanet Value Rhea
+	Action UnHidePlanet Value Titan
+	Action UnHidePlanet Value Iapetus
+	Action UnHidePlanet Value Uranus
+	Action UnHidePlanet Value Ariel
+	Action UnHidePlanet Value Titania
+	Action UnHidePlanet Value Oberon
+	Action UnHidePlanet Value Neptune
+	Action UnHidePlanet Value Triton
+	Action UnHidePlanet Value Proteus
+	Action UnHidePlanet Value Pluto
+	Action UnHidePlanet Value Charon
+	Action UnHidePlanet Value Sol
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value win.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { MarsSci }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[MarsSci] Mission Successful!  Now we know how to invade
+		the alien world!  Stand by for further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+Event
+{
+	Trigger Score
+	Value 1
+
+	Action Enable
+	Value returnsuccess
+
+	Action Disable
+	Value returnfailure
+
+	Action Message
+	Value
+	{
+		[computer] Mission successful.  Return to base.
+	}
+}
+

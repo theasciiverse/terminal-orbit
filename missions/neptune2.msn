@@ -1,0 +1,182 @@
+/*
+ *  Aliens moving collector into position
+ */
+
+Verbose
+
+Include iobase.inc
+Waypoint { }
+
+/* Player */
+Cursor { IoBase -700 +200 }
+Player { }
+
+Briefing
+{
+	Mission:  Interception\\
+	Whatever that huge thing is, the aliens are trying to move it
+	into the inner solar system for some reason.\\
+	Your mission is to proceed to the alien fleet (waypoint 2),
+	eliminate the alien fleet and, if possible, destroy the
+	alien construction.
+}
+
+/* Bad guys */
+Cursor { Sol -30000000 10000000 -2000000 }
+Waypoint { }
+
+/* Solar collector */
+Object
+{
+	Name ?
+	Model solar1.tri
+	Strategy DoNothing
+	ShieldRegen 1000
+}
+
+/* Destroyer */
+Cursor { -3000 +100 -200 }
+Object
+{
+	Name Destroyer
+	Model dest1.tri
+	Strategy Hunt4
+	Weapon 3
+	TurnRate 0.025
+	Speed 0.002
+	Score 1
+	MaxShields 200
+}
+
+/* Misc squadrons */
+Cursor { +0 +0 +3000 }
+Object { Name Alpha1 Model medium1.tri Score 1 Strategy hunt4 }
+Cursor { +0 +0 -3000 }
+Cursor { -2000 +0 -2000 }
+Object { Name Alpha2 Model medium1.tri Score 1 Strategy hunt4 }
+Cursor { +2000 +0 +2000 }
+
+Cursor { -3000 -300 +400 }
+Cursor { +0 +0 +3000 }
+Object { Name Alpha3 Model heavy1.tri Score 1 Strategy hunt3 }
+Cursor { +0 +0 -3000 }
+
+Cursor { -2000 -2000 -2000 }
+Object { Name Alpha4 Model heavy1.tri Score 1 Strategy hunt3 }
+Cursor { +2000 +2000 +2000 }
+
+/* Transport */
+Curosr { -3000 -300 +300 }
+Object
+{
+	Name Transport
+	Model trans1.tri
+	Score 1
+	MaxShields 300
+	Strategy DoNothing
+}
+
+Event
+{
+	Name loadsuccess
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value mars1.msn
+}
+
+Event
+{
+	Name loadfailure
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value lose.msn
+}
+
+Cursor { IoBase }
+Event
+{
+	Name returnfailure
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadfailure
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission failed! 
+	}
+}
+
+Event
+{
+	Name returnsuccess
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value loadsuccess
+
+	Action Message
+	Value
+	{
+		[IoBase] Mission Successful!  Await further orders.
+	}
+}
+
+Event
+{
+	Trigger Depart
+	Value 10000
+
+	Action Enable
+	Value returnfailure
+}
+
+/* All alien ships destroyed */
+Event
+{
+	Trigger Score
+	Value 6
+
+	Action Message
+	Value
+	{
+		[IoBase] Good work.  Now destroy that large object.
+	}
+
+	Action Enable
+	Value e1
+}
+
+/* It's indestructible! */
+Event
+{
+	Name e1
+	Disabled
+	Trigger Alarm
+	Value 60
+
+	Action Message
+	Value
+	{
+		[IoBase] Good heavens, it must be indestructible.
+		Return to base -- we'll have a salvage crew retrieve
+		the object.
+	}
+
+	Action Disable
+	Value returnfailure
+
+	Action Enable
+	Value returnsuccess
+}

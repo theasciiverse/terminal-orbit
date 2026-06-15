@@ -1,0 +1,66 @@
+Verbose
+
+Include marssci.inc
+
+/* Player */
+Cursor { MarsSci -700 +200 }
+Player { }
+
+Briefing
+{
+	Congratulations!\\
+	You have successfully completed ORBIT Episode One.\\
+	For more missions, check out the ORBIT web site at:\\
+	HTTP://GENESIS.NE.MEDIAONE.NET/orbit\\
+	Did you know you can design your own missions and include
+	your own spaceships and planets?  Check out the web site
+	for details!\\
+	Thanks for playing the game, and I sure hope you enjoyed it.\\
+	- Steve Belczyk, orbit@genesis.nred.ma.us
+}
+
+/* Should have a MUSEUM here! */
+
+Cursor { Mercury +10000 }
+Object { Name artifact1 Model artifact1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name base1 Model base1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name base2 Model base2.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name comm1 Model comm1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name dest1 Model dest1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name eject1 Model eject1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name freight1 Model freight1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name heavy1 Model heavy1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name light1 Model light1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name light2 Model light2.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name medium1 Model medium1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name null Model null.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name platform Model platform.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name portal1 Model portal1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name solar1 Model solar1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name solar2 Model solar2.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name station1 Model station1.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name station2 Model station2.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name station3 Model station3.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name station4 Model station4.tri Strategy DoNothing }
+Cursor { +10000 }
+Object { Name trans1 Model trans1.tri Strategy DoNothing }
+
