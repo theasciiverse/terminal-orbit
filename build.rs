@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let stars_h = "~/code/space-orbit/src/stars.h";
+    let stars_h = "asciiverse/reference/space-orbit/src/stars.h";
     println!("cargo:rerun-if-changed={stars_h}");
 
     let out_dir = env::var("OUT_DIR").unwrap();

@@ -4,7 +4,7 @@ A Rust TUI conversion of ORBIT, a 1999 OpenGL space combat simulator by Steve Be
 
 ## What this is
 
-The original C source lives at `~/code/space-orbit/` (~15,348 lines, 34 files). This project replaces all OpenGL rendering with a terminal UI: a 3D braille-rendered viewport via the `drawille` crate, and HUD panels via `ratatui`. Physics, AI, mission logic, and vector math are ported directly from C.
+The original C source lives at `asciiverse/reference/space-orbit/` (~15,348 lines, 34 files). This project replaces all OpenGL rendering with a terminal UI: a 3D braille-rendered viewport via the `drawille` crate, and HUD panels via `ratatui`. Physics, AI, mission logic, and vector math are ported directly from C.
 
 **Why:** Preserve and modernize a real-physics educational game (Newtonian flight, real solar system, campaigns from Mars to Pluto) without requiring a 1999 OpenGL binary.
 
@@ -52,14 +52,14 @@ BOOM_TIME=1.0s, CONSAGE=3.0s (console message fade), MAXDELTAT=0.1s
 - Cursor system: bare value = absolute; `+value` = relative offset; planet name = planet position
 - After `Cursor { Earth }`, position IS Earth's position; `{ Earth -15000 }` = Earth + offset
 - `\\` in text = newline
-- 52 mission files at `~/code/space-orbit/missions/`
+- 52 mission files at `asciiverse/reference/space-orbit/missions/`
 
 ## 3D model formats
 
 - `.tri`: rows of `x1 y1 z1  x2 y2 z2  x3 y3 z3  0xRRGGBB` — divide coords by 100
 - `.ac`: AC3D format — MATERIAL/OBJECT/numvert/numsurf/SURF blocks, polygon soup
-- Models at `~/code/space-orbit/models/` — copied to `models/`
-- Planet texture maps (PPM P6 256×256) at `~/code/space-orbit/maps/` — copied to `maps/`
+- Models at `asciiverse/reference/space-orbit/models/` — copied to `models/`
+- Planet texture maps (PPM P6 256×256) at `asciiverse/reference/space-orbit/maps/` — copied to `maps/`
 
 ## Key bindings (current)
 
