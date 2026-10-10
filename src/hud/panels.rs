@@ -10,6 +10,7 @@ use ratatui::{
 };
 
 use crate::autopilot::AutopilotMode;
+use crate::constants::KM_TO_UNITS1;
 use crate::math::Vec3;
 use crate::renderer::{
     canvas::BrailleCanvas,
@@ -29,6 +30,8 @@ const HUD_HEIGHT: u16 = 12;
 const CAM_3P_DIST:   f64 = 2.0;
 /// Height above the ship for the third-person camera.
 const CAM_3P_HEIGHT: f64 = 0.5;
+/// Player ship drawing scale for the plain third-person camera (~1 unit across).
+const CAM_3P_SHIP_SCALE: f64 = 0.12;
 
 pub fn render(
     frame: &mut Frame,
@@ -84,7 +87,26 @@ fn render_viewport(
         return;
     }
 
-    let camera = if orbit_cam {
+    // In standard orbit the camera and ship drawing scale with the planet.
+    let std_orbit = match autopilot {
+        AutopilotMode::Orbit { planet_idx } if orbit_cam => world.planets.get(planet_idx),
+        _ => None,
+    };
+    let ship_scale = match std_orbit {
+        Some(p) => p.radius * crate::renderer::projection::STD_ORBIT_SHIP_SCALE,
+        None => CAM_3P_SHIP_SCALE,
+    };
+
+    let camera = if let Some(planet) = std_orbit {
+        Camera::standard_orbit(
+            world.player.pos,
+            world.player.view,
+            planet.pos,
+            planet.radius,
+            w_dots,
+            h_dots,
+        )
+    } else if orbit_cam {
         // Focus point: the orbited planet, or a point far ahead if no autopilot.
         let focus = match autopilot {
             AutopilotMode::Orbit { planet_idx } => {
@@ -127,7 +149,7 @@ fn render_viewport(
     draw_junk(&mut c_junk, &camera, junk_vel, world.abs_t);
     // Draw player ship wireframe in third-person.
     if orbit_cam {
-        draw_player_ship_3p(&mut c_player, &camera, &world.player);
+        draw_player_ship_3p(&mut c_player, &camera, &world.player, ship_scale);
     }
     draw_friendly_ships(&mut c_friendly, &camera, world);
     draw_enemy_ships(&mut c_enemy, &camera, world);
@@ -560,10 +582,20 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
 
     // Autopilot status row.
     if let AutopilotMode::Orbit { planet_idx } = autopilot {
-        let planet_name = world.planets.get(planet_idx)
-            .map(|p| p.name.as_str()).unwrap_or("?");
+        let (planet_name, altitude_km, target_km) = world.planets.get(planet_idx)
+            .map(|pl| {
+                let r = (p.pos - pl.pos).mag2().sqrt();
+                let target = crate::autopilot::standard_orbit_radius(world, planet_idx);
+                (pl.name.as_str(), (r - pl.radius) * KM_TO_UNITS1, (target - pl.radius) * KM_TO_UNITS1)
+            })
+            .unwrap_or(("?", 0.0, 0.0));
+        let phase = if (altitude_km - target_km).abs() < 0.05 * target_km.max(1.0) {
+            "Standard orbit"
+        } else {
+            "Entering orbit"
+        };
         lines.push(Line::from(Span::styled(
-            format!(" [AUTOPILOT]  Orbit: {}  — press G to disengage", planet_name),
+            format!(" [AUTOPILOT]  {}: {}, altitude {:.0} km  (G to release)", phase, planet_name, altitude_km),
             Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
         )));
     }

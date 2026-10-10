@@ -93,7 +93,7 @@ pub fn draw_junk(canvas: &mut BrailleCanvas, camera: &Camera, player_vel: Vec3, 
 
 /// Draw a simple wireframe ship at the player's position and orientation,
 /// used for the third-person orbit camera view.
-pub fn draw_player_ship_3p(canvas: &mut BrailleCanvas, camera: &Camera, player: &Player) {
+pub fn draw_player_ship_3p(canvas: &mut BrailleCanvas, camera: &Camera, player: &Player, scale: f64) {
     // A minimal "fighter" silhouette in model space:
     //   +X = forward (view), +Y = right, +Z = up
     let edges: &[(Vec3, Vec3)] = &[
@@ -114,7 +114,6 @@ pub fn draw_player_ship_3p(canvas: &mut BrailleCanvas, camera: &Camera, player: 
     ];
 
     // Model → world: nose along player.view, starboard along player.right, up along player.up.
-    let scale = 0.12_f64; // ship spans ~1 unit so it frames against a ~1-unit-radius planet
     for (v0, v1) in edges {
         let w0 = player.pos + player.view * v0.x * scale
                             + player.right * v0.y * scale

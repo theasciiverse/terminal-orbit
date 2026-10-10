@@ -1,4 +1,4 @@
-use crate::constants::G;
+use crate::constants::{G, RMIN};
 use crate::math::Vec3;
 use crate::types::World;
 
@@ -39,76 +39,94 @@ fn prograde_dir(pos: Vec3, planet_pos: Vec3) -> Option<Vec3> {
     }
 }
 
+/// Standard orbit radius, in planet radii: low enough that the planet fills
+/// the lower part of the orbit camera's frame.
+pub const STANDARD_ORBIT: f64 = 1.25;
+
+/// How fast the autopilot closes the gap to standard orbit (1/s).
+const K_RADIAL: f64 = 0.6;
+/// How fast it settles into the planet's equatorial (XY) plane (1/s).
+const K_PLANE: f64 = 0.8;
+/// Time constant for velocity changes, seconds.
+const TAU: f64 = 0.5;
+
+/// Standard orbit radius around `planet_idx`, in game units.
+pub fn standard_orbit_radius(world: &World, planet_idx: usize) -> f64 {
+    world.planets[planet_idx].radius * STANDARD_ORBIT
+}
+
+/// Circular-orbit speed at radius `r`, matched to the game's own gravity:
+/// `physics::gravity` adds its pull once per frame (as orbit.c does) and
+/// clamps r² at RMIN, so v = sqrt(a·r) with a = G·m / max(r², RMIN) / dt.
+fn circular_speed(mass: f64, r: f64, dt: f64) -> f64 {
+    let accel = G * mass / (r * r).max(RMIN) / dt;
+    (accel * r).sqrt()
+}
+
 /// Target circular-orbit velocity at the player's current position.
 pub fn orbit_velocity(world: &World, planet_idx: usize) -> Vec3 {
     let planet = &world.planets[planet_idx];
     let r = (world.player.pos - planet.pos).mag2().sqrt();
     if r < 1e-6 { return Vec3::zero(); }
 
-    let v_orbit = (G * planet.mass / r).sqrt();
+    let v_orbit = circular_speed(planet.mass, r, world.delta_t);
     prograde_dir(world.player.pos, planet.pos)
         .map(|d| d * v_orbit)
         .unwrap_or(Vec3::zero())
 }
 
-/// One autopilot tick — drives the ship into a stable close planar orbit.
+/// One autopilot tick: fly to standard orbit and hold it, starship style.
 ///
-/// Strategy (three simultaneous actions each frame):
-///   1. Damp the radial velocity (cancel any drift toward / away from planet).
-///   2. Accelerate the tangential velocity toward circular-orbit speed.
-///   3. Zero the out-of-plane (Z) velocity to keep the orbit in the XY plane.
-///
-/// Time constants are short (≈1 s) so orbit insertion is snappy.
+/// The target velocity each frame is circular-orbit speed along prograde,
+/// plus a radial term closing the gap to standard-orbit radius and a Z term
+/// settling into the planet's equatorial plane.  The ship eases toward that
+/// velocity, nose prograde and dorsal side away from the planet.
 pub fn tick_autopilot(world: &mut World, mode: AutopilotMode, dt: f64) {
     let AutopilotMode::Orbit { planet_idx } = mode else { return };
     if planet_idx >= world.planets.len() { return; }
 
     let planet_pos = world.planets[planet_idx].pos;
     let planet_mass = world.planets[planet_idx].mass;
+    let r_target = standard_orbit_radius(world, planet_idx);
 
-    let radial = world.player.pos - planet_pos;
-    let r = radial.mag2().sqrt();
-    if r < 1e-6 { return; }
+    // Radius measured in the orbital plane, so a ship above a pole still
+    // has a well-defined way down to the equator.
+    let offset = world.player.pos - planet_pos;
+    let mut flat = Vec3::new(offset.x, offset.y, 0.0);
+    if flat.mag2() < 1e-12 {
+        flat = Vec3::new(r_target, 0.0, 0.0);
+    }
+    let r = flat.mag2().sqrt();
+    let r_hat = flat / r;
+    let z_hat = Vec3::new(0.0, 0.0, 1.0);
+    let prograde = z_hat.cross(r_hat).normalize();
 
-    let r_hat = radial / r;
-    let v_orbit = (G * planet_mass / r).sqrt();
+    let target = prograde * circular_speed(planet_mass, r, dt)
+        + r_hat * (-(r - r_target) * K_RADIAL)
+        + z_hat * (-offset.z * K_PLANE);
 
-    let Some(prograde) = prograde_dir(world.player.pos, planet_pos) else { return };
+    let alpha = (dt / TAU).min(1.0);
+    world.player.vel = world.player.vel + (target - world.player.vel) * alpha;
 
-    let vel = world.player.vel;
+    // With game gravity off nothing bends the path, and the ship would drift
+    // outward off every tangent; supply the centripetal pull ourselves.
+    if !world.gravity {
+        let v_tan = world.player.vel.dot(prograde);
+        world.player.vel = world.player.vel - r_hat * (v_tan * v_tan / r * dt);
+    }
 
-    // Decompose current velocity into three components.
-    let v_radial     = r_hat   * vel.dot(r_hat);    // toward/away from planet
-    let v_zplane     = Vec3::new(0.0, 0.0, vel.z);  // out-of-orbital-plane
-    let v_tangential = vel - v_radial - v_zplane;   // already in-plane tangential
-
-    // Target: pure prograde tangential, no radial, no Z.
-    let target_tangential = prograde * v_orbit;
-
-    // Blend each component independently, fast time-constant.
-    let alpha_rad = (dt / 0.8).min(1.0);  // damp radial quickly
-    let alpha_tan = (dt / 1.2).min(1.0);  // smooth up to orbit speed
-    let alpha_z   = (dt / 0.8).min(1.0);  // flatten to XY plane quickly
-
-    let new_vel =
-        v_radial      * (1.0 - alpha_rad)                          // radial → 0
-        + v_tangential + (target_tangential - v_tangential) * alpha_tan  // tangential → orbit
-        + v_zplane    * (1.0 - alpha_z);                           // z → 0
-
-    world.player.vel = new_vel;
-
-    // Orient the ship nose along prograde.
+    // Nose along prograde, dorsal side facing away from the planet.
     let beta = (dt * 3.0).min(1.0);
     let blended = world.player.view + (prograde - world.player.view) * beta;
     if blended.mag2() > 1e-10 {
         world.player.view = blended.normalize();
     }
-    // Z_hat is the natural "up" in the orbital plane.
-    let z_hat = Vec3::new(0.0, 0.0, 1.0);
-    let right = world.player.view.cross(z_hat);
+    let outward = offset.normalize();
+    // Same handedness as move_player: right = up × view, up = view × right.
+    let right = outward.cross(world.player.view);
     if right.mag2() > 1e-10 {
         world.player.right = right.normalize();
-        world.player.up = world.player.right.cross(world.player.view).normalize();
+        world.player.up = world.player.view.cross(world.player.right).normalize();
     }
 }
 
@@ -118,5 +136,70 @@ pub fn autopilot_target_name(world: &World, mode: AutopilotMode) -> Option<&str>
         world.planets.get(planet_idx).map(|p| p.name.as_str())
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::physics::move_player;
+
+    fn world_near_earth(offset: Vec3) -> (World, usize) {
+        let mut w = World::new();
+        crate::planet_data::init_weapons(&mut w);
+        crate::planet_data::reset_planets(&mut w);
+        let earth = w.planets.iter().position(|p| p.name == "Earth").unwrap();
+        w.player.pos = w.planets[earth].pos + offset;
+        (w, earth)
+    }
+
+    fn radius(w: &World, p: usize) -> f64 {
+        (w.player.pos - w.planets[p].pos).mag2().sqrt()
+    }
+
+    fn fly(w: &mut World, mode: AutopilotMode, secs: f64) {
+        for _ in 0..(secs / w.delta_t) as usize {
+            tick_autopilot(w, mode, w.delta_t);
+            move_player(w);
+        }
+    }
+
+    #[test]
+    fn settles_into_standard_orbit_with_gravity_on_or_off() {
+        for gravity in [true, false] {
+            settles_from_far_out_and_off_plane(gravity);
+        }
+    }
+
+    fn settles_from_far_out_and_off_plane(gravity: bool) {
+        let (mut w, earth) = world_near_earth(Vec3::new(12.0, -5.0, 4.0));
+        w.gravity = gravity;
+        let mode = AutopilotMode::Orbit { planet_idx: earth };
+        fly(&mut w, mode, 20.0);
+        let target = standard_orbit_radius(&w, earth);
+        let r = radius(&w, earth);
+        assert!((r - target).abs() < 0.02 * target,
+            "gravity {}: r={:.3} target={:.3}", gravity, r, target);
+        let dz = w.player.pos.z - w.planets[earth].pos.z;
+        assert!(dz.abs() < 0.01, "still {:.3} out of the equatorial plane", dz);
+        // Dorsal side away from the planet.
+        let out = (w.player.pos - w.planets[earth].pos).normalize();
+        assert!(w.player.up.dot(out) > 0.95);
+    }
+
+    #[test]
+    fn orbit_holds_under_game_gravity_after_release() {
+        let (mut w, earth) = world_near_earth(Vec3::new(3.0, 0.0, 0.0));
+        w.gravity = true;
+        fly(&mut w, AutopilotMode::Orbit { planet_idx: earth }, 20.0);
+        let target = standard_orbit_radius(&w, earth);
+        // Autopilot off: gravity alone, for about two full orbits.
+        let period = 2.0 * std::f64::consts::PI * target / w.player.vel.mag2().sqrt();
+        let mut worst: f64 = 0.0;
+        for _ in 0..(2.0 * period / w.delta_t) as usize {
+            move_player(&mut w);
+            worst = worst.max((radius(&w, earth) - target).abs() / target);
+        }
+        assert!(worst < 0.05, "orbit drifted {:.1}% from standard radius", worst * 100.0);
     }
 }

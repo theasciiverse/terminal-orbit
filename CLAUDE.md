@@ -75,7 +75,7 @@ BOOM_TIME=1.0s, CONSAGE=3.0s (console message fade), MAXDELTAT=0.1s
 | U | Lock nearest enemy |
 | Y | Cycle targets |
 | F | Cycle weapons |
-| G | Toggle orbit autopilot |
+| G | Toggle orbit autopilot (flies to standard orbit, 1.25 planet radii) |
 | C | Toggle third-person camera |
 | T | Toggle planet textures |
 | B | Toggle constellation lines |
@@ -206,6 +206,11 @@ Port `util.c` to `src/math.rs`: `Vec3`, `RotateAbout` (Rodrigues formula), `Dotp
 - Next: more Episode Two missions, then a free-contract mode (delivery and bounty jobs at
   stations) reusing the same stations and traffic
 - `loader.rs` test loads every mission and checks LoadMission/Enable targets and route stops
+- Standard orbit: G flies to an equatorial orbit at 1.25 radii (`autopilot.rs`), orbit speed
+  derived from `physics::gravity` (per-frame pull with RMIN clamp, as orbit.c; the old
+  sqrt(Gm/r) was ~5x too slow), centripetal feed-forward when prefs gravity is off;
+  `Camera::standard_orbit` frames ship + horizon, tilt computed from horizon dip, all in
+  planet radii
 
 ### Phase 10 — Multiplayer (not started)
 - `src/net/protocol.rs`: PositionUpdate, FireMissile, TargetDestroyed, MissionLoad, Ping/Pong, PlayerJoin/Leave

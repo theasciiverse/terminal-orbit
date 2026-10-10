@@ -86,7 +86,7 @@ Press `B` to overlay IAU stick-figure constellation lines for 14 major constella
 Press `T` to switch from wireframe to full-viewport raycasted textures. Each planet is ray-sphere intersected per terminal cell, UV-mapped with oblicity rotation, and lit with Lambert diffuse from Sol (40% ambient so night side stays visible). 38 planet maps included.
 
 ### Orbit Autopilot
-Press `G` to engage — the ship automatically inserts into a stable circular orbit around the nearest planet. Prograde direction is computed via Z×r̂ (not velocity-dependent), with separate radial and out-of-plane velocity damping. Press `C` for a cinematic third-person camera looking from behind the ship toward the planet.
+Press `G` and the ship flies itself into standard orbit around the nearest planet: an equatorial circle at 1.25 planet radii, nose prograde, dorsal side to space. The orbit speed matches the game's own gravity, so the orbit holds after you press `G` again to release it (with gravity on in the prefs). `G` also switches to the standard-orbit camera, the classic starship-in-orbit shot: the ship in the middle of the frame and the planet's curved horizon across the lower part, scaled to the planet so it looks the same at Earth or Phobos. Press `T` for the textured planet. `C` toggles back to the cockpit view.
 
 ### Mission System & Campaign
 Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and the complete event engine: Alarm/Approach/Depart/StopNear/Score/Destroy/Shields/Reach triggers driving Message/Hide/Unhide/Score/Destroy/Cargo/Waypoint/LoadMission/Boom/Stop actions.
