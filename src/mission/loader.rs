@@ -77,6 +77,9 @@ fn reset_world(world: &mut World) {
     world.player.vel = Vec3::zero();
     world.briefing.clear();
     world.lock.target = None;
+    world.cargo.clear();
+    world.player.waypoint = 0;
+    world.full_stop = false;
 
     init_weapons(world);
     reset_planets(world);
@@ -102,7 +105,9 @@ fn handle_cursor(
         let first = tok.chars().next().unwrap_or(' ');
         if first == '+' || first == '-' || first.is_ascii_digit() {
             let relative = first == '+' || first == '-';
-            let v: f64 = tok.parse().map_err(|_| format!("Bad number: {}", tok))?;
+            // mission.c never rejects a bad number (sscanf just fails), and
+            // squad5.inc relies on that with a "+=" typo for "+0"; read as 0.
+            let v: f64 = tok.parse().unwrap_or(0.0);
             let v = v / KM_TO_UNITS1;
             if relative {
                 match axis {
@@ -196,6 +201,9 @@ fn handle_object(
     world.targets[t].hidden = false;
     world.targets[t].invisible = false;
     world.targets[t].name = "Target".to_string();
+    world.targets[t].route.clear();
+    world.targets[t].route_idx = 0;
+    world.targets[t].cruise = 1500.0 / KM_TO_UNITS1;
     // default model is first in world.models (index 0)
     world.targets[t].model = if world.models.is_empty() { None } else { Some(0) };
 
@@ -244,6 +252,14 @@ fn handle_object(
                 let v: f64 = parser.require()?.parse().unwrap_or(0.01);
                 world.targets[t].maxvel = v;
             }
+            "route" => {
+                let stops = read_value(parser)?;
+                world.targets[t].route = stops.split_whitespace().map(str::to_string).collect();
+            }
+            "cruise" => {
+                let v: f64 = parser.require()?.parse().unwrap_or(1500.0);
+                world.targets[t].cruise = v / KM_TO_UNITS1;
+            }
             _ => { /* skip */ }
         }
     }
@@ -291,6 +307,7 @@ fn handle_event(
         let tok = parser.require()?;
         match tok.to_lowercase().as_str() {
             "}" => {
+                split_name_and_number(world, e);
                 convert_approach_units(world, e);
                 return Ok(());
             }
@@ -339,6 +356,18 @@ fn handle_event(
 }
 
 /// Read a value token: either a bare token or `{ ... }` block joined with spaces.
+/// Shields and Reach values are `{ Name number }`: split the name into cvalue
+/// and the number into fvalue, as mission.c does with sscanf.
+fn split_name_and_number(world: &mut World, e: usize) {
+    if !matches!(world.events[e].trigger, EventTrigger::Shields | EventTrigger::Reach) {
+        return;
+    }
+    let raw = world.events[e].cvalue.clone();
+    let mut parts = raw.split_whitespace();
+    world.events[e].cvalue = parts.next().unwrap_or("").to_string();
+    world.events[e].fvalue = parts.next().and_then(|v| v.parse().ok()).unwrap_or(0.0);
+}
+
 fn read_value(parser: &mut Parser) -> Result<String, String> {
     let tok = parser.require()?;
     if tok != "{" {
@@ -518,6 +547,8 @@ fn parse_strategy(s: &str) -> Strategy {
         "hunt2" => Strategy::Hunt2,
         "hunt3" => Strategy::Hunt3,
         "hunt4" => Strategy::Hunt4,
+        "ferry" => Strategy::Ferry,
+        "convoy" => Strategy::Convoy,
         _       => Strategy::DoNothing,
     }
 }
@@ -532,6 +563,7 @@ fn parse_trigger(s: &str) -> EventTrigger {
         "alarm"    => EventTrigger::Alarm,
         "stopnear" => EventTrigger::StopNear,
         "shields"  => EventTrigger::Shields,
+        "reach"    => EventTrigger::Reach,
         _          => EventTrigger::Null,
     }
 }
@@ -541,8 +573,10 @@ fn parse_action_kind(s: &str) -> EventActionKind {
         "message"      => EventActionKind::Message,
         "hide"         => EventActionKind::Hide,
         "unhide"       => EventActionKind::Unhide,
-        "destroy"      => EventActionKind::Boom, // use Boom as stand-in; Phase 5 adds real destroy
-        "score"        => EventActionKind::None, // score delta handled separately; placeholder
+        "destroy"      => EventActionKind::Destroy,
+        "score"        => EventActionKind::Score,
+        "cargo"        => EventActionKind::Cargo,
+        "waypoint"     => EventActionKind::Waypoint,
         "enable"       => EventActionKind::Enable,
         "disable"      => EventActionKind::Disable,
         "loadmission"  => EventActionKind::LoadMission,
@@ -676,5 +710,104 @@ mod tests {
 
         let alive = world.targets.iter().filter(|t| t.age > 0.0).count();
         assert_eq!(alive, 4, "train04 should spawn four targets");
+    }
+
+    fn load(name: &str) -> World {
+        let mut world = make_world();
+        load_mission(&mut world, name, Path::new("missions"), Path::new("models"))
+            .unwrap_or_else(|e| panic!("{} failed to load: {}", name, e));
+        world
+    }
+
+    fn target<'a>(world: &'a World, name: &str) -> &'a crate::types::Target {
+        world.targets.iter()
+            .find(|t| t.age > 0.0 && t.name.eq_ignore_ascii_case(name))
+            .unwrap_or_else(|| panic!("no target {}", name))
+    }
+
+    #[test]
+    fn every_mission_loads_and_links_to_real_files() {
+        for entry in std::fs::read_dir("missions").unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().and_then(|e| e.to_str()) != Some("msn") {
+                continue;
+            }
+            let name = path.file_name().unwrap().to_str().unwrap().to_string();
+            if name == "template.msn" {
+                continue; // a commented example pointing at made-up files
+            }
+            let world = load(&name);
+            for ev in world.events.iter().filter(|e| e.pending) {
+                for a in &ev.actions {
+                    if a.kind == EventActionKind::LoadMission {
+                        assert!(
+                            Path::new("missions").join(&a.cvalue).exists(),
+                            "{} loads missing mission {}", name, a.cvalue
+                        );
+                    }
+                    if a.kind == EventActionKind::Enable || a.kind == EventActionKind::Disable {
+                        assert!(
+                            world.events.iter().any(|e| e.name.eq_ignore_ascii_case(&a.cvalue)),
+                            "{} enables/disables unknown event {}", name, a.cvalue
+                        );
+                    }
+                }
+            }
+            // Every route stop must name a real object.
+            for t in world.targets.iter().filter(|t| t.age > 0.0) {
+                for stop in &t.route {
+                    assert!(
+                        world.targets.iter().any(|o| o.age > 0.0 && o.name.eq_ignore_ascii_case(stop)),
+                        "{}: {} routes to unknown {}", name, t.name, stop
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn episode_two_chains_from_mission_one_to_the_end() {
+        let chain = ["ep2_01.msn", "ep2_02.msn", "ep2_03.msn", "ep2_04.msn", "ep2_05.msn", "ep2_06.msn"];
+        for pair in chain.windows(2) {
+            let world = load(pair[0]);
+            let next = world.events.iter().filter(|e| e.pending)
+                .flat_map(|e| e.actions.iter())
+                .any(|a| a.kind == EventActionKind::LoadMission && a.cvalue == pair[1]);
+            assert!(next, "{} should lead to {}", pair[0], pair[1]);
+        }
+        let last = load("ep2_06.msn");
+        assert!(last.events.iter().flat_map(|e| e.actions.iter())
+            .any(|a| a.kind == EventActionKind::LoadMission && a.cvalue == "ep2_end.msn"));
+    }
+
+    #[test]
+    fn shields_value_splits_into_name_and_threshold() {
+        let world = load("mars1.msn");
+        let ev = world.events.iter()
+            .find(|e| e.pending && e.trigger == EventTrigger::Shields)
+            .expect("mars1 has a Shields event");
+        assert_eq!(ev.cvalue, "MarsSci");
+        assert_eq!(ev.fvalue, 200.0);
+    }
+
+    #[test]
+    fn route_and_cruise_parse() {
+        let world = load("ep2_03.msn");
+        let lantern = target(&world, "Lantern");
+        assert_eq!(lantern.strategy, Strategy::Convoy);
+        assert_eq!(lantern.route, vec!["Corridor".to_string(), "EuropaStation".to_string()]);
+        assert!((lantern.cruise - 800.0 / KM_TO_UNITS1).abs() < 1e-12);
+    }
+
+    #[test]
+    fn relay_point_sits_beyond_the_moon_from_earth() {
+        // ep2_01's briefing says the relay point is beyond the lunar far side.
+        let world = load("ep2_01.msn");
+        let earth = world.planets.iter().find(|p| p.name == "Earth").unwrap().pos;
+        let moon = world.planets.iter().find(|p| p.name == "Moon").unwrap().pos;
+        let relay = target(&world, "RelayPoint").pos;
+        let out = (moon - earth).normalize();
+        let beyond = (relay - moon).normalize();
+        assert!(out.dot(beyond) > 0.9, "relay point is not on the far side: {}", out.dot(beyond));
     }
 }

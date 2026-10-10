@@ -70,6 +70,7 @@ BOOM_TIME=1.0s, CONSAGE=3.0s (console message fade), MAXDELTAT=0.1s
 | I/K | Pitch up/down |
 | J/L | Roll left/right |
 | X | Toggle warp engines |
+| H | Hold (station-keeping; StopNear docking needs zero velocity) |
 | Space | Fire weapon |
 | U | Lock nearest enemy |
 | Y | Cycle targets |
@@ -190,6 +191,21 @@ Port `util.c` to `src/math.rs`: `Vec3`, `RotateAbout` (Rodrigues formula), `Dotp
 - **Controls**: U=lock enemy, Y=cycle targets, F=cycle weapons, X=warp toggle, M=recall message
 - **Mission messages**: full multi-line display, M key recall, last_text persistence
 - Training missions rewritten for terminal-orbit controls
+
+### Phase 9b: Episode Two, part one (2026-10-10)
+- Engine: `Action Score`/`Action Destroy` made real, `Shields` value split into name + threshold
+  (as mission.c does), H hold key (the original's fullstop; StopNear docking was unreachable),
+  `Ferry`/`Convoy` route strategies with `Route`/`Cruise`, `Reach` trigger, `Cargo` and `Waypoint`
+  actions, lenient cursor numbers (squad5.inc's `+=` typo stopped mars5.msn loading)
+- Missions `ep2_01`..`ep2_06` + `ep2_end`, entered from `win.msn` or the title screen's
+  "Episode Two"; station/traffic includes (`shackleton`, `earthtraffic`, `marstraffic`,
+  `europastation`, `jovetraffic`, `titantraffic`)
+- Direction: scientific slant, inspired by real ESA/NASA missions; briefings are fiction and
+  avoid real-world dates or status claims (Mars Sample Return and Gateway are in flux).
+  Opponents: salvager pirates, the Jovian Combine (rival faction), the returning aliens
+- Next: more Episode Two missions, then a free-contract mode (delivery and bounty jobs at
+  stations) reusing the same stations and traffic
+- `loader.rs` test loads every mission and checks LoadMission/Enable targets and route stops
 
 ### Phase 10 — Multiplayer (not started)
 - `src/net/protocol.rs`: PositionUpdate, FireMissile, TargetDestroyed, MissionLoad, Ping/Pong, PlayerJoin/Leave

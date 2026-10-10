@@ -32,6 +32,10 @@ const MISSIONS_DIR: &str = "missions";
 const MODELS_DIR: &str = "models";
 const MAPS_DIR: &str = "maps";
 const START_MISSION: &str = "train01.msn";
+/// First mission of Episode Two, which follows Steve Belczyk's win.msn.
+const EPISODE_TWO_MISSION: &str = "ep2_01.msn";
+/// Missions whose briefing ends the game and returns to the title screen.
+const END_MISSIONS: &[&str] = &["lose.msn", "ep2_end.msn"];
 
 enum Screen {
     Title(usize),
@@ -121,7 +125,12 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                         let msn = world.mission_file.clone();
                         push_save(&msn);
                         world.briefing.clear();
-                        if msn == "win.msn" || msn == "lose.msn" {
+                        if msn == "win.msn" {
+                            // Episode One is over; Episode Two picks up from here.
+                            try_load_mission(&mut world, EPISODE_TWO_MISSION);
+                            screen = briefing_or_play(&world);
+                            last_tick = Instant::now();
+                        } else if END_MISSIONS.contains(&msn.as_str()) {
                             screen = Screen::Title(0);
                         } else {
                             last_tick = Instant::now();
@@ -246,13 +255,14 @@ fn handle_title_event(
         }
         KeyCode::Enter | KeyCode::Char(' ') => match *sel {
             0 => return Ok(Some(start_new_game(world))),
-            1 if !saves.is_empty() => {
+            1 => return Ok(Some(load_slot(world, EPISODE_TWO_MISSION))),
+            2 if !saves.is_empty() => {
                 return Ok(Some(Screen::LoadMenu {
                     slots: saves.to_vec(),
                     sel: 0,
                 }));
             }
-            2 => return Err(io::Error::new(io::ErrorKind::Other, "quit")),
+            3 => return Err(io::Error::new(io::ErrorKind::Other, "quit")),
             _ => {}
         },
         KeyCode::Char('n') => return Ok(Some(start_new_game(world))),
@@ -354,6 +364,11 @@ fn handle_playing_event(
                     world.message.age = 0.0;
                 }
             }
+            KeyCode::Char('h') => {
+                world.full_stop = !world.full_stop;
+                let status = if world.full_stop { "HOLD: station-keeping" } else { "HOLD released" };
+                crate::ui::console::console_add(world, status);
+            }
             KeyCode::Char('u') => lock_nearest_enemy(world),
             KeyCode::Char('y') => cycle_target(world),
             KeyCode::Char('f') => cycle_weapon(world),
@@ -373,6 +388,7 @@ fn handle_playing_event(
                 if *autopilot != AutopilotMode::Off {
                     *autopilot = AutopilotMode::Off;
                 } else if let Some(idx) = find_nearest_planet(world) {
+                    world.full_stop = false;
                     *autopilot = AutopilotMode::Orbit { planet_idx: idx };
                     *orbit_cam = true;  // auto-switch to third-person for the cinematic view
                 }

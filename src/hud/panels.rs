@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
@@ -517,6 +517,24 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
         )),
     ];
 
+    // Hold and cargo status.
+    if world.full_stop || !world.cargo.is_empty() {
+        let mut spans = Vec::new();
+        if world.full_stop {
+            spans.push(Span::styled(
+                " [HOLD]",
+                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            ));
+        }
+        if !world.cargo.is_empty() {
+            spans.push(Span::styled(
+                format!(" Cargo: {}", world.cargo),
+                Style::default().fg(Color::LightBlue),
+            ));
+        }
+        lines.push(Line::from(spans));
+    }
+
     // Row 4: locked target info.
     if let Some(t_idx) = world.lock.target {
         if let Some(t) = world.targets.get(t_idx) {
@@ -558,7 +576,7 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
     } else {
         let indent = " ".repeat(1 + world.mission_file.len() + 2);
         lines.push(Line::from(format!(
-            " {}  [WASD/IJKL fly  SPC fire  U lock  Y cycle  F weapon  X warp]",
+            " {}  [WASD/IJKL fly  H hold  SPC fire  U lock  Y cycle  F weapon  X warp]",
             world.mission_file
         )));
         lines.push(Line::from(format!(
@@ -568,7 +586,7 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
     }
 
     let block = Block::default().borders(Borders::ALL).title(" HUD ");
-    frame.render_widget(Paragraph::new(lines).block(block), area);
+    frame.render_widget(Paragraph::new(lines).block(block).wrap(Wrap { trim: false }), area);
 }
 
 /// Overlay planet/target names on the 3D viewport using projected positions.

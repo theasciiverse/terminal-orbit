@@ -26,6 +26,10 @@ pub enum Strategy {
     DoNothing,
     Sit1, Sit2, Sit3, Sit4,
     Hunt1, Hunt2, Hunt3, Hunt4,
+    /// Unarmed traffic: flies its Route stop to stop, looping forever.
+    Ferry,
+    /// Unarmed transport: flies its Route once and holds at the last stop.
+    Convoy,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -41,6 +45,8 @@ pub enum EventTrigger {
     #[default]
     Null,
     Approach, Destroy, Score, Alarm, Depart, True, StopNear, Shields,
+    /// A named target comes within `fvalue` of the event position.
+    Reach,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -50,6 +56,7 @@ pub enum EventActionKind {
     Message, Hide, Unhide, Enable, Disable,
     LoadMission, Stop, Boom, Flash,
     MoveObject, MovePlayer, MovePlanet, HidePlanet, UnhidePlanet, Betray,
+    Score, Destroy, Cargo, Waypoint,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -141,6 +148,11 @@ pub struct Target {
     pub turnrate: f64,
     pub maxvel: f64,
     pub weapon: usize,
+    /// Names of the targets a Ferry or Convoy flies between, in order.
+    pub route: Vec<String>,
+    pub route_idx: usize,
+    /// Ferry/Convoy cruising speed, game units per second.
+    pub cruise: f64,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -271,6 +283,9 @@ pub struct World {
     /// Set to Some(filename) to trigger a mission reload on the next tick.
     pub pending_mission: Option<String>,
 
+    /// What the player is carrying, shown on the HUD; empty when the hold is empty.
+    pub cargo: String,
+
     /// Running total of shots fired by targets; used in tests.
     pub shots_fired: u32,
 }
@@ -321,6 +336,7 @@ impl World {
             briefing: String::new(),
             mission_verbose: false,
             pending_mission: None,
+            cargo: String::new(),
             shots_fired: 0,
         };
 

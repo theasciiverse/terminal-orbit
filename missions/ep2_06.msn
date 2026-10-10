@@ -1,0 +1,181 @@
+/*
+ *  Episode Two, mission 6: Faint Signal
+ *  A nod to New Horizons, which flew past Pluto in July 2015 and found a
+ *  young, active world: the nitrogen-ice plains of Sputnik Planitia,
+ *  mountains of water ice, blue haze.  The portal from Episode One wakes.
+ */
+
+Verbose
+
+/* The portal, where pluto1.msn left it */
+Cursor { Pluto +20000 +8000 -5000 }
+Object
+{
+	Name Portal
+	Model portal1.tri
+	Strategy DoNothing
+	MaxShields 500
+	ShieldRegen 1000
+}
+
+/* Listening post station point */
+Cursor { Portal -4000 +1500 +0 }
+Object { Name ListenPoint Model null.tri Hidden }
+Waypoint { }
+Object { Name ListeningPost Model comm1.tri Friendly Hidden MaxShields 300 }
+
+/* What comes through */
+Cursor { Portal +1500 +0 +0 }
+Object { Name Visitor1 Model light1.tri Strategy Hunt4 Score 1 Hidden }
+Cursor { Portal -1500 +1500 +0 }
+Object { Name Visitor2 Model light1.tri Strategy Hunt3 Score 1 Hidden }
+Cursor { Portal +0 -1500 +1500 }
+Object { Name Visitor3 Model light2.tri Strategy Hunt4 Score 1 Hidden }
+Cursor { Portal +0 +1500 -1500 }
+Object { Name Visitor4 Model light2.tri Strategy Hunt3 Score 1 Hidden }
+Cursor { Portal +2000 +2000 +0 }
+Object
+{
+	Name Harbinger
+	Model dest1.tri
+	Strategy Hunt3
+	Weapon 3
+	MaxShields 300
+	TurnRate 0.12
+	Speed 0.002
+	Score 1
+	Hidden
+}
+
+/* Player */
+Cursor { Portal -16000 +6000 +2000 }
+Player { }
+
+Briefing
+{
+	Mission 6: Faint Signal\\
+	When New Horizons flew past Pluto it found a world nobody
+	expected: a heart-shaped plain of nitrogen ice, mountains of
+	water ice, a sky with layers of blue haze.  Small and cold, but
+	still geologically alive.\\
+	Something else out here is alive too.  The deep-space array has
+	picked up a faint, regular signal from the alien portal.\\
+	Carry a listening post to the station point near the portal and
+	hold there (H) to deploy it.  Then stay with it.
+}
+
+Event
+{
+	Trigger True
+
+	Action Cargo
+	Value { Listening post }
+}
+
+Cursor { ListenPoint }
+Event
+{
+	Trigger StopNear
+	Value 1000
+
+	Action Cargo Value none
+	Action Unhide Value ListeningPost
+	Action Score Value 1
+	Action Enable Value arrival
+
+	Action Message
+	Value
+	{
+		[ListeningPost] Online.  The signal is getting stronger.
+		It isn't a beacon.  It's a countdown.
+	}
+}
+
+Event
+{
+	Name arrival
+	Disabled
+	Trigger Alarm
+	Value 15.0
+
+	Action Unhide Value Visitor1
+	Action Unhide Value Visitor2
+	Action Unhide Value Visitor3
+	Action Unhide Value Visitor4
+
+	Action Message
+	Value
+	{
+		[ListeningPost] Portal discharge!  Four ships coming through.
+		They're back!
+	}
+}
+
+/* Listening post + four fighters */
+Event
+{
+	Trigger Score
+	Value 5
+
+	Action Unhide Value Harbinger
+
+	Action Message
+	Value
+	{
+		[ListeningPost] Something big behind them.  Much bigger.
+	}
+}
+
+/* ... and the big one */
+Event
+{
+	Trigger Score
+	Value 6
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[ListeningPost] It's down.  The portal has gone quiet, but
+		the recording is safe.  They weren't invading.  They were
+		scouting.
+	}
+}
+
+Event
+{
+	Trigger Destroy
+	Value ListeningPost
+
+	Action Enable Value retry
+
+	Action Message
+	Value
+	{
+		[computer] Listening post destroyed.  Mission failed.
+	}
+}
+
+Event
+{
+	Name retry
+	Disabled
+	Trigger Alarm
+	Value 8.0
+
+	Action LoadMission
+	Value ep2_06.msn
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 12.0
+
+	Action LoadMission
+	Value ep2_end.msn
+}

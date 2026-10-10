@@ -1,0 +1,175 @@
+/*
+ *  Episode Two, mission 5: Dragonfly
+ *  Inspired by NASA's Dragonfly, a nuclear-powered rotorcraft lander
+ *  bound for Titan: first landing in the Shangri-La dune fields, then
+ *  hops toward Selk crater.  The Combine has blockaded Saturn.
+ */
+
+Verbose
+
+Include titanbase.inc
+Waypoint { }
+Include titantraffic.inc
+
+/* Atmospheric entry point, high over the Shangri-La dunes */
+Cursor { Titan -4200 +0 +1500 }
+Object { Name EntryPoint Model null.tri Hidden }
+Waypoint { }
+Object { Name Lander Model eject1.tri Friendly Hidden }
+
+/* Combine blockade between the base and the entry point */
+Cursor { Titan -3000 +6000 +2500 }
+Object
+{
+	Name CombineCutter
+	Model dest1.tri
+	Strategy Hunt3
+	Weapon 3
+	MaxShields 300
+	TurnRate 0.15
+	Speed 0.002
+	Score 1
+}
+Cursor { +2500 +0 +1000 }
+Object { Name Blockade1 Model medium1.tri Strategy Hunt4 Score 1 }
+Cursor { -5000 +0 +0 }
+Object { Name Blockade2 Model medium1.tri Strategy Hunt4 Score 1 }
+Cursor { +2500 +2500 -2000 }
+Object { Name Blockade3 Model medium1.tri Strategy Hunt3 Score 1 }
+
+/* Player, just out of Titan Base */
+Cursor { TitanBase -1500 +700 }
+Player { }
+
+Briefing
+{
+	Mission 5: Dragonfly\\
+	Titan is the only moon with a thick atmosphere: nitrogen, at
+	half again Earth's surface pressure, with methane rain, rivers
+	and seas.  Gravity is about a seventh of Earth's, so a
+	rotorcraft can hop from site to site.\\
+	The Dragonfly lander is in your hold.  Carry it to the entry
+	point over the Shangri-La dune fields (the waypoint arrow shows
+	the way) and hold there (H) to release it.\\
+	The Combine has declared Saturn closed.  A cutter and three
+	fighters stand between you and the entry point.  After the drop,
+	clear the blockade and dock back at Titan Base.
+}
+
+Event
+{
+	Trigger True
+
+	Action Cargo
+	Value { Dragonfly rotorcraft lander }
+
+	Action Waypoint
+	Value 1
+}
+
+Cursor { EntryPoint }
+Event
+{
+	Name drop
+	Trigger StopNear
+	Value 1000
+
+	Action Cargo Value none
+	Action Unhide Value Lander
+	Action Score Value 1
+	Action Waypoint Value 0
+
+	Action Message
+	Value
+	{
+		[TitanBase] Lander away.  Heat shield, parachute, then rotors
+		in the haze.  Telemetry says it's flying!  Now clear that
+		blockade and come home.
+	}
+}
+
+Event
+{
+	Trigger Shields
+	Value { CombineCutter 100 }
+
+	Action Message
+	Value
+	{
+		[CombineCutter] Cutter to Combine command: taking heavy
+		damage at Titan.  Request support!
+	}
+}
+
+/* Lander dropped and all four blockade ships gone */
+Event
+{
+	Trigger Score
+	Value 5
+
+	Action Enable
+	Value home
+
+	Action Message
+	Value
+	{
+		[TitanBase] Blockade broken!  Dragonfly reports first light
+		on the dunes: grains of frozen organics, piled by the wind.
+		You are cleared to dock.
+	}
+}
+
+Cursor { TitanBase }
+Event
+{
+	Name home
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[TitanBase] Welcome in.  Something odd has come up on the
+		deep-space array, pilot.  It's coming from Pluto.
+	}
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value ep2_06.msn
+}
+
+Event
+{
+	Trigger Destroy
+	Value TitanBase
+
+	Action Enable Value retry
+
+	Action Message
+	Value
+	{
+		[computer] Titan Base lost.  Mission failed.
+	}
+}
+
+Event
+{
+	Name retry
+	Disabled
+	Trigger Alarm
+	Value 8.0
+
+	Action LoadMission
+	Value ep2_05.msn
+}

@@ -14,6 +14,79 @@ pub fn think_target(t: usize, world: &mut World) {
         Strategy::Hunt2 => hunt2(t, world),
         Strategy::Hunt3 => hunt3(t, world),
         Strategy::Hunt4 => hunt4(t, world),
+        Strategy::Ferry  => fly_route(t, world, true),
+        Strategy::Convoy => fly_route(t, world, false),
+    }
+}
+
+// --- Route strategies (unarmed traffic, not in the original) ---
+
+/// How close a Ferry or Convoy must get to a stop to count as arrived there.
+pub const ROUTE_ARRIVE: f64 = 1000.0 / KM_TO_UNITS1;
+/// Ferry/Convoy thruster acceleration, game units per second squared.
+const ROUTE_ACCEL: f64 = DELTAV * 0.25;
+
+/// Fly target `t` along its route: accelerate toward the current stop up to
+/// cruise speed, brake so as to arrive at rest, then move on to the next stop.
+/// Ferries loop; convoys hold at their last stop. Never fires.
+fn fly_route(t: usize, world: &mut World, looping: bool) {
+    let n = world.targets[t].route.len();
+    if n == 0 {
+        return;
+    }
+    let idx = world.targets[t].route_idx.min(n - 1);
+    let stop = &world.targets[t].route[idx];
+    // Stops may be hidden nav markers, so look them up by name only.
+    let Some(dest) = world.targets.iter()
+        .find(|o| o.age > 0.0 && o.name.eq_ignore_ascii_case(stop))
+        .map(|o| o.pos)
+    else {
+        return;
+    };
+
+    let d = dest - world.targets[t].pos;
+    let dist = d.mag2().sqrt();
+    let dt = world.delta_t;
+
+    if dist < ROUTE_ARRIVE {
+        if looping {
+            world.targets[t].route_idx = (idx + 1) % n;
+        } else if idx + 1 < n {
+            world.targets[t].route_idx = idx + 1;
+        } else {
+            world.targets[t].vel = Vec3::default();
+            return;
+        }
+    }
+
+    // Fastest speed from which the ship can still brake to rest at the stop.
+    let speed = world.targets[t].cruise.min((2.0 * ROUTE_ACCEL * dist).sqrt());
+    let want = if dist > 0.0 { d * (speed / dist) } else { Vec3::default() };
+    let dv = want - world.targets[t].vel;
+    let dv_len = dv.mag2().sqrt();
+    let max_dv = ROUTE_ACCEL * dt;
+    world.targets[t].vel = if dv_len > max_dv {
+        world.targets[t].vel + dv * (max_dv / dv_len)
+    } else {
+        want
+    };
+
+    steer_toward(t, dest, world);
+}
+
+/// Turn target `t` toward `pos` without firing.
+fn steer_toward(t: usize, pos: Vec3, world: &mut World) {
+    let v = (pos - world.targets[t].pos).normalize();
+    let turnrate = world.targets[t].turnrate;
+    if v.dot(world.targets[t].right) > 0.0 {
+        world.targets[t].move_left = turnrate;
+    } else {
+        world.targets[t].move_right = turnrate;
+    }
+    if v.dot(world.targets[t].up) > 0.0 {
+        world.targets[t].move_up = turnrate;
+    } else {
+        world.targets[t].move_down = turnrate;
     }
 }
 

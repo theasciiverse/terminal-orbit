@@ -1,0 +1,118 @@
+/*
+ *  Episode Two, mission 1: Lunar Link
+ *  Inspired by ESA's Moonlight programme and its Lunar Pathfinder relay:
+ *  the far side of the Moon never faces Earth, so anything working there
+ *  needs a relay satellite to talk home.
+ */
+
+Verbose
+
+Include earthbase.inc
+Waypoint { }
+
+Include shackleton.inc
+Include earthtraffic.inc
+
+/* Relay point near Earth-Moon L2, about 60,000 km beyond the far side */
+Cursor { Moon +0 +60000 +0 }
+Object { Name RelayPoint Model null.tri Hidden }
+Waypoint { }
+Object { Name LunarRelay Model comm1.tri Friendly Hidden }
+
+/* Player */
+Cursor { EarthBase -2500 +800 }
+Player { }
+
+Briefing
+{
+	Episode Two: Open Skies\\
+	Mission 1: Lunar Link\\
+	The aliens are gone and the science programmes are flying again.\\
+	The far side of the Moon never faces Earth, so a lander working
+	there cannot call home without a relay satellite overhead.
+	Earth Base has one crated and ready.\\
+	Dock at Earth Base: come within 1000 km, then press H to hold
+	still.  Carry the relay to the station point beyond the Moon
+	(the HUD waypoint arrow shows the way) and hold there to
+	release it.
+}
+
+Event
+{
+	Trigger Alarm
+	Value 3.0
+
+	Action Message
+	Value
+	{
+		[EarthBase] Welcome back, pilot.  Come alongside and press H
+		to hold station; we will load the relay.
+	}
+}
+
+/* Dock at Earth Base: load the relay */
+Cursor { EarthBase }
+Event
+{
+	Name load
+	Trigger StopNear
+	Value 1000
+
+	Action Cargo
+	Value { Lunar relay satellite }
+
+	Action Waypoint
+	Value 1
+
+	Action Enable
+	Value release
+
+	Action Message
+	Value
+	{
+		[EarthBase] Relay aboard.  The station point sits about
+		60,000 km beyond the lunar far side, near the Earth-Moon L2
+		point.  Follow the waypoint arrow.  Mind the haulers on
+		the Shackleton run.
+	}
+}
+
+/* Hold at the relay point: release it */
+Cursor { RelayPoint }
+Event
+{
+	Name release
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Cargo
+	Value none
+
+	Action Unhide
+	Value LunarRelay
+
+	Action Score
+	Value 1
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[Shackleton] Carrier lock on the relay!  First signal from the
+		far side in years.  Nicely flown.
+	}
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value ep2_02.msn
+}

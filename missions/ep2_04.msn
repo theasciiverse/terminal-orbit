@@ -1,0 +1,189 @@
+/*
+ *  Episode Two, mission 4: Ice Shell
+ *  Inspired by the hunt for Europa's water plumes (Hubble caught possible
+ *  vapour plumes in 2014 and 2016) and by ESA's JUICE, which flies past
+ *  Europa twice before settling into orbit around Ganymede.
+ *  The Jovian Combine, a breakaway colony government, makes its move.
+ */
+
+Verbose
+
+Include europastation.inc
+Waypoint { }
+Include jovetraffic.inc
+
+/* Three sampling stations over suspected plume sites */
+Cursor { Europa +0 +4200 +1200 }
+Object { Name Site1 Model null.tri Hidden }
+Waypoint { }
+Object { Name Sampler1 Model comm1.tri Friendly Hidden }
+
+Cursor { Europa -3800 -1500 +1800 }
+Object { Name Site2 Model null.tri Hidden }
+Waypoint { }
+Object { Name Sampler2 Model comm1.tri Friendly Hidden }
+
+Cursor { Europa +2500 -2500 -3200 }
+Object { Name Site3 Model null.tri Hidden }
+Waypoint { }
+Object { Name Sampler3 Model comm1.tri Friendly Hidden }
+
+/* Jovian Combine patrol: polite, for now */
+Cursor { Europa +9000 +9000 +0 }
+Object { Name CombineLead Model heavy1.tri Friendly Strategy Hunt4 Weapon 3 MaxShields 200 Score 1 }
+Cursor { +2000 +1500 +0 }
+Object { Name CombineWing1 Model medium1.tri Friendly Strategy Hunt3 Score 1 }
+Cursor { -4000 +0 +0 }
+Object { Name CombineWing2 Model medium1.tri Friendly Strategy Hunt4 Score 1 }
+
+/* Player, undocking from Europa Station */
+Cursor { EuropaStation -1200 +500 }
+Player { }
+
+Briefing
+{
+	Mission 4: Ice Shell\\
+	Europa's ocean may be pushing water up through cracks in the ice
+	and venting it into space.  If so, we can sample the ocean
+	without drilling through kilometres of ice.\\
+	You carry three plume samplers.  Fly to each site over the
+	suspected vents (follow the waypoint arrow) and hold there (H) to
+	deploy a sampler.\\
+	A Jovian Combine patrol is in the area.  The Combine runs the
+	mining colonies on Ganymede and Callisto and has been talking
+	about "Jovian resources" lately.  Do not provoke them.
+}
+
+Event
+{
+	Trigger True
+
+	Action Cargo
+	Value { 3 plume samplers }
+
+	Action Waypoint
+	Value 1
+}
+
+Cursor { Site1 }
+Event
+{
+	Trigger StopNear
+	Value 1000
+
+	Action Unhide Value Sampler1
+	Action Cargo Value { 2 plume samplers }
+	Action Score Value 1
+	Action Waypoint Value 2
+	Action Enable Value deploy2
+
+	Action Message
+	Value
+	{
+		[EuropaStation] Sampler one is sniffing.  Water vapour and
+		salts already!  On to site two.
+	}
+}
+
+Cursor { Site2 }
+Event
+{
+	Name deploy2
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Unhide Value Sampler2
+	Action Cargo Value { 1 plume sampler }
+	Action Score Value 1
+	Action Waypoint Value 3
+	Action Enable Value deploy3
+
+	Action Message
+	Value
+	{
+		[CombineLead] Jovian Combine patrol to science vessel.  Europa
+		lies inside the Combine resource claim.  Cease deployment and
+		withdraw.
+	}
+}
+
+Cursor { Site3 }
+Event
+{
+	Name deploy3
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Unhide Value Sampler3
+	Action Cargo Value none
+	Action Score Value 1
+	Action Waypoint Value 0
+
+	Action Betray Value CombineLead
+	Action Betray Value CombineWing1
+	Action Betray Value CombineWing2
+
+	Action Message
+	Value
+	{
+		[CombineLead] You were warned.  All ships: take that vessel
+		and those samplers apart.
+	}
+}
+
+/* Three samplers + three Combine ships */
+Event
+{
+	Trigger Score
+	Value 6
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[EuropaStation] Patrol broken and the samplers are still
+		transmitting.  Organics in the plume, pilot.  Organics!
+		The Combine will not let this go, though.
+	}
+}
+
+Event
+{
+	Name lost
+	Trigger Destroy
+	Value EuropaStation
+
+	Action Enable Value retry
+
+	Action Message
+	Value
+	{
+		[computer] Europa Station lost.  Mission failed.
+	}
+}
+
+Event
+{
+	Name retry
+	Disabled
+	Trigger Alarm
+	Value 8.0
+
+	Action LoadMission
+	Value ep2_04.msn
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 12.0
+
+	Action LoadMission
+	Value ep2_05.msn
+}

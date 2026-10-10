@@ -118,6 +118,12 @@ pub fn move_player(world: &mut World) {
         world.player.still = false;
     }
 
+    // Station-keeping (H) holds the ship dead still until thrust is applied,
+    // like the original's fullstop key; StopNear docking needs zero velocity.
+    if world.player.move_forward > 0.0 || world.player.move_backward > 0.0 {
+        world.full_stop = false;
+    }
+
     match world.player.flight_model {
         FlightModel::Newtonian => {
             world.player.vel = world.player.vel + deltav;
@@ -129,6 +135,11 @@ pub fn move_player(world: &mut World) {
         FlightModel::Arcade => {
             world.player.vel = world.player.view * world.player.throttle;
         }
+    }
+
+    if world.full_stop {
+        world.player.vel = Vec3::default();
+        world.player.throttle = 0.0;
     }
 
     world.player.pos = world.player.pos + world.player.vel * dt;
@@ -231,7 +242,11 @@ pub fn move_targets(world: &mut World) {
                 world.targets[t].age += dt;
                 world.targets[t].msl_idle += dt;
 
-                if world.targets[t].range2 < TARG_MAXRANGE2 {
+                // Route traffic keeps flying when the player is far away;
+                // otherwise it would coast forever past its stop.
+                let on_route = matches!(world.targets[t].strategy,
+                    Strategy::Ferry | Strategy::Convoy);
+                if on_route || world.targets[t].range2 < TARG_MAXRANGE2 {
                     crate::ai::think_target(t, world);
                 }
 

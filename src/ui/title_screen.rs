@@ -23,7 +23,7 @@ const ORBIT_ART: &str = r#"   ___  ____  ____  ___  ____
 
 const SUBTITLE: &str = "Space Combat Simulator — lovingly translated to TUI\n  Originally by Steve Belczyk (1999)";
 
-pub const TITLE_OPTIONS: &[&str] = &["New Game", "Load Game", "Quit"];
+pub const TITLE_OPTIONS: &[&str] = &["New Game", "Episode Two", "Load Game", "Quit"];
 
 /// Pad all lines of an art block to the block's own max width, then
 /// center the whole block.  Keeps internal letter-column alignment
@@ -95,7 +95,7 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     let mut menu_lines: Vec<Line> = vec![Line::from("")];
 
     for (i, opt) in TITLE_OPTIONS.iter().enumerate() {
-        let disabled = i == 1 && saves.is_empty();
+        let disabled = i == 2 && saves.is_empty();
         let padded = format!("{:<width$}", opt, width = max_opt);
         let line = if disabled {
             Line::from(Span::styled(

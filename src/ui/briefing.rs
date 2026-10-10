@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
@@ -33,7 +33,8 @@ pub fn render(frame: &mut Frame, world: &World, top_scores: &[ScoreEntry]) {
     };
 
     // Briefing text
-    let text = world.briefing.replace("\\\\", "\n").replace('\\', "\n");
+    // A blank line between paragraphs; long lines wrap to the panel.
+    let text = world.briefing.replace("\\\\", "\n\n").replace('\\', "\n");
     let body_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(3), Constraint::Length(2)])
@@ -41,10 +42,12 @@ pub fn render(frame: &mut Frame, world: &World, top_scores: &[ScoreEntry]) {
 
     let lines: Vec<Line> = text
         .lines()
-        .map(|l| Line::from(Span::styled(l.to_string(), Style::default().fg(Color::White))))
+        .map(|l| Line::from(Span::styled(l.trim_start().to_string(), Style::default().fg(Color::White))))
         .collect();
     frame.render_widget(
-        Paragraph::new(lines).block(Block::default().borders(Borders::NONE)),
+        Paragraph::new(lines)
+            .block(Block::default().borders(Borders::NONE))
+            .wrap(Wrap { trim: false }),
         body_chunks[0],
     );
     frame.render_widget(

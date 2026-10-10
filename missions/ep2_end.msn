@@ -1,0 +1,22 @@
+/*
+ *  Episode Two, Part One complete
+ */
+
+Include earthbase.inc
+Include shackleton.inc
+Include earthtraffic.inc
+
+Cursor { EarthBase -2500 +800 }
+Player { }
+
+Briefing
+{
+	Episode Two: Open Skies, Part One complete.\\
+	The far side of the Moon is talking, Mars has given up its
+	samples, a radar is mapping Europa's ice, and Dragonfly is
+	hopping across the dunes of Titan.\\
+	But the Combine is arming, the salvagers are still out there,
+	and something on the other side of the Pluto portal now knows
+	we are listening.\\
+	To be continued.
+}

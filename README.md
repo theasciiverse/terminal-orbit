@@ -41,6 +41,7 @@ or after building:
 | `J` | Roll left |
 | `L` | Roll right |
 | `X` | Toggle warp engines (high-speed thrust) |
+| `H` | Hold: station-keeping, zeroes velocity until you thrust again (needed to dock) |
 
 ### Combat
 
@@ -88,7 +89,7 @@ Press `T` to switch from wireframe to full-viewport raycasted textures. Each pla
 Press `G` to engage — the ship automatically inserts into a stable circular orbit around the nearest planet. Prograde direction is computed via Z×r̂ (not velocity-dependent), with separate radial and out-of-plane velocity damping. Press `C` for a cinematic third-person camera looking from behind the ship toward the planet.
 
 ### Mission System & Campaign
-Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and the complete event engine: Alarm/Approach/Depart/Score/Destroy/Shields triggers driving Message/Hide/Unhide/LoadMission/Boom/Stop actions.
+Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and the complete event engine: Alarm/Approach/Depart/StopNear/Score/Destroy/Shields/Reach triggers driving Message/Hide/Unhide/Score/Destroy/Cargo/Waypoint/LoadMission/Boom/Stop actions.
 
 ## Campaign
 
@@ -104,6 +105,31 @@ Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and t
 | Uranus | uranus01 |
 | Neptune | neptune1–2 |
 | Pluto | pluto1 |
+
+### Episode Two: Open Skies
+
+A new campaign after Steve Belczyk's `win.msn`, also startable from the title screen. Science missions inspired by real ESA and NASA programmes, with salvager pirates, the breakaway Jovian Combine and the returning aliens as opponents. The briefings are fiction built on real science, and make no claims about real mission dates or status.
+
+| Mission | Where | Inspired by | Gameplay |
+|---------|-------|-------------|----------|
+| ep2_01 Lunar Link | Earth, Moon | ESA Moonlight, Lunar Pathfinder | Dock, carry a relay satellite to the far side |
+| ep2_02 Sample Return | Mars | NASA/ESA Mars Sample Return studies | Race salvagers to a sample container, deliver it |
+| ep2_03 Clipper Run | Europa | NASA Europa Clipper | Escort a freighter through raiders |
+| ep2_04 Ice Shell | Europa | Hubble plume sightings, ESA JUICE | Deploy three samplers; the Combine turns hostile |
+| ep2_05 Dragonfly | Titan | NASA Dragonfly | Drop a lander through a Combine blockade |
+| ep2_06 Faint Signal | Pluto | New Horizons | Guard a listening post at the alien portal |
+
+Stations and traffic (`*.inc`) keep the solar system busy: freighters run between Earth Base and Shackleton Station, Mars Science and Deimos Depot, Europa Station and the Jovian relay, Titan Base and Kraken Depot.
+
+### Mission format additions
+
+On top of the original ORBIT keywords:
+
+- `Object { ... Strategy Ferry Route { A B } Cruise 1500 }`: unarmed traffic flying between named objects in a loop. `Strategy Convoy` flies the route once and holds at the end. `Cruise` is in km/s.
+- `Trigger Reach Value { Ship 1000 }`: fires when the named ship comes within 1000 km of the event's cursor.
+- `Action Cargo Value { text }` shows cargo on the HUD; `Value none` clears it.
+- `Action Waypoint Value N` points the HUD waypoint arrow at waypoint N.
+- `Action Score` and `Action Destroy` work as in the original (they were placeholders before).
 
 ## HUD
 

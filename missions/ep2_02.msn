@@ -1,0 +1,209 @@
+/*
+ *  Episode Two, mission 2: Sample Return
+ *  Inspired by the NASA/ESA Mars Sample Return studies: rock cores sealed
+ *  in tubes on the surface, lifted to orbit in a container, caught there
+ *  and brought home.  First contact with the salvager pirates.
+ */
+
+Verbose
+
+Include marssci.inc
+Waypoint { }
+Include marstraffic.inc
+
+/* The orbiting sample container, freshly launched from Jezero crater */
+Cursor { MarsSci -4000 +22000 +3000 }
+Object { Name SampleOS Model eject1.tri Friendly MaxShields 300 }
+Waypoint { }
+
+/* Salvager tug racing for it, with two fighters riding shotgun */
+Cursor { SampleOS +38000 +12000 -4000 }
+Object
+{
+	Name Magpie
+	Model trans1.tri
+	Strategy Convoy
+	Route { SampleOS }
+	Cruise 600
+	MaxShields 250
+	Score 1
+}
+Cursor { Magpie +2000 +1500 +0 }
+Object { Name Salvager1 Model fight1.tri Strategy Hunt4 Score 1 }
+Cursor { Magpie +2000 -1500 +0 }
+Object { Name Salvager2 Model fight1.tri Strategy Hunt4 Score 1 }
+
+/* Player */
+Cursor { MarsSci -1500 +600 }
+Player { }
+
+Briefing
+{
+	Mission 2: Sample Return\\
+	For years the rovers in Jezero crater sealed rock cores in
+	titanium tubes, hoping someone would come for them.  Today a
+	small rocket lifted the tubes to Mars orbit inside a container
+	the size of a football.\\
+	Catch it: fly to the container and hold alongside (H) to bring
+	it aboard, then deliver it to the Mars Science Station.\\
+	Planetary protection rules apply: those samples might hold signs
+	of ancient Martian life, so nobody opens the container outside
+	the quarantine lab.
+}
+
+Event
+{
+	Trigger Alarm
+	Value 6.0
+
+	Action Message
+	Value
+	{
+		[MarsSci] Contact!  Unregistered tug burning toward the
+		container.  Salvagers: they sell anything they can grab.
+		Get there first!
+	}
+}
+
+/* Player catches the container */
+Cursor { SampleOS }
+Event
+{
+	Name catch
+	Trigger StopNear
+	Value 1000
+
+	Action Hide
+	Value SampleOS
+
+	Action Cargo
+	Value { Mars sample container (sealed) }
+
+	Action Disable
+	Value grabbed
+
+	Action Enable
+	Value deliver
+
+	Action Waypoint
+	Value 0
+
+	Action Score
+	Value 1
+
+	Action Message
+	Value
+	{
+		[MarsSci] Container secured!  Bring it home, and keep
+		those salvagers off you.
+	}
+}
+
+/* Salvagers get there first: try again */
+Cursor { SampleOS }
+Event
+{
+	Name grabbed
+	Trigger Reach
+	Value { Magpie 1000 }
+
+	Action Hide
+	Value SampleOS
+
+	Action Disable
+	Value catch
+
+	Action Enable
+	Value retry
+
+	Action Message
+	Value
+	{
+		[MarsSci] They've grabbed it.  Years of work, gone.
+		Mission failed.
+	}
+}
+
+Event
+{
+	Name retry
+	Disabled
+	Trigger Alarm
+	Value 8.0
+
+	Action LoadMission
+	Value ep2_02.msn
+}
+
+/* Deliver to the quarantine lab */
+Cursor { MarsSci }
+Event
+{
+	Name deliver
+	Disabled
+	Trigger StopNear
+	Value 1000
+
+	Action Cargo
+	Value none
+
+	Action Score
+	Value 1
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[MarsSci] Container is in the quarantine lab.  First Martian
+		samples ever brought in.  The biologists are in tears.
+	}
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value ep2_03.msn
+}
+
+/* Lose the station, lose the mission */
+Event
+{
+	Trigger Destroy
+	Value MarsSci
+
+	Action Message
+	Value
+	{
+		[computer] Mars Science Station lost.  Mission failed.
+	}
+
+	Action Enable
+	Value retry
+}
+
+/* Container shot to pieces */
+Event
+{
+	Trigger Destroy
+	Value SampleOS
+
+	Action Disable
+	Value catch
+
+	Action Message
+	Value
+	{
+		[MarsSci] The container broke up!  Samples scattered across
+		orbit.  Mission failed.
+	}
+
+	Action Enable
+	Value retry
+}

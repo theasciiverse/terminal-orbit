@@ -1,0 +1,171 @@
+/*
+ *  Episode Two, mission 3: Clipper Run
+ *  Inspired by NASA's Europa Clipper, which carries an ice-penetrating
+ *  radar and swings past Europa in repeated flybys instead of orbiting
+ *  it, because Jupiter's radiation belts are brutal that close in.
+ */
+
+Verbose
+
+Include europastation.inc
+Waypoint { }
+Include jovetraffic.inc
+
+/* Nav marker on the approach corridor */
+Cursor { EuropaStation +30000 +18000 +4000 }
+Object { Name Corridor Model null.tri Hidden }
+
+/* The freighter, dropping out of its transfer coast */
+Cursor { EuropaStation +62000 +30000 +8000 }
+Object
+{
+	Name Lantern
+	Model freight1.tri
+	Friendly
+	Strategy Convoy
+	Route { Corridor EuropaStation }
+	Cruise 800
+	MaxShields 400
+}
+
+/* First raiders, lying in wait near the corridor */
+Cursor { Corridor +4000 -6000 +2000 }
+Object { Name Raider1 Model fight1.tri Strategy Hunt3 Score 1 }
+Cursor { +0 +3000 +0 }
+Object { Name Raider2 Model fight1.tri Strategy Hunt4 Score 1 }
+
+/* Second wave, hidden until Lantern passes the corridor */
+Cursor { EuropaStation +12000 -14000 +3000 }
+Object { Name Raider3 Model fight1.tri Strategy Hunt4 Score 1 Hidden }
+Cursor { +3000 +0 +0 }
+Object { Name Raider4 Model fight1.tri Strategy Hunt3 Score 1 Hidden }
+Cursor { +0 +3000 -2000 }
+Object { Name RaiderBoss Model trans1.tri Strategy Hunt3 Weapon 3 MaxShields 250 Score 1 Hidden }
+
+/* Player, flying alongside the freighter */
+Cursor { Lantern -1500 +1200 +0 }
+Player { }
+
+Briefing
+{
+	Mission 3: Clipper Run\\
+	The freighter Lantern is bringing an ice-penetrating radar to
+	Europa Station.  Under Europa's ice shell lies a salt-water ocean
+	with more water than all of Earth's seas, and the radar will
+	map how thick the ice is and where the water comes close.\\
+	The salvagers know what that radar is worth.  Escort Lantern
+	all the way to the station.  If she is lost, so is the mission.\\
+	Real-world note: NASA's Europa Clipper never orbits Europa.  The
+	radiation that close to Jupiter would cook its electronics, so it
+	dips in for flybys and retreats again.
+}
+
+Event
+{
+	Trigger Alarm
+	Value 4.0
+
+	Action Message
+	Value
+	{
+		[Lantern] Good to have you on our wing.  We are slow and
+		heavy, so stay close.
+	}
+}
+
+/* Lantern passes the corridor: second wave */
+Cursor { Corridor }
+Event
+{
+	Trigger Reach
+	Value { Lantern 1500 }
+
+	Action Unhide Value Raider3
+	Action Unhide Value Raider4
+	Action Unhide Value RaiderBoss
+
+	Action Message
+	Value
+	{
+		[EuropaStation] More contacts between you and us!  Three
+		ships, one of them a heavy.  Clear the way!
+	}
+}
+
+Event
+{
+	Trigger Shields
+	Value { Lantern 150 }
+
+	Action Message
+	Value
+	{
+		[Lantern] Hull breach on deck two!  We can't take much more!
+	}
+}
+
+/* Lantern arrives */
+Cursor { EuropaStation }
+Event
+{
+	Name arrived
+	Trigger Reach
+	Value { Lantern 1500 }
+
+	Action Disable
+	Value lost
+
+	Action Score
+	Value 1
+
+	Action Enable
+	Value next
+
+	Action Message
+	Value
+	{
+		[EuropaStation] Lantern is docked and the radar is safe.
+		Fine escort work, pilot.
+	}
+}
+
+Event
+{
+	Name lost
+	Trigger Destroy
+	Value Lantern
+
+	Action Disable
+	Value arrived
+
+	Action Enable
+	Value retry
+
+	Action Message
+	Value
+	{
+		[computer] Lantern destroyed.  Mission failed.
+	}
+}
+
+Event
+{
+	Name retry
+	Disabled
+	Trigger Alarm
+	Value 8.0
+
+	Action LoadMission
+	Value ep2_03.msn
+}
+
+Event
+{
+	Name next
+	Disabled
+	Trigger Alarm
+	Value 10.0
+
+	Action LoadMission
+	Value ep2_04.msn
+}
