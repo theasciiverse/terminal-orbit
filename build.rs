@@ -3,7 +3,11 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let stars_h = "asciiverse/reference/space-orbit/src/stars.h";
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let stars_h = Path::new(&manifest_dir)
+        .join("data/stars.h")
+        .display()
+        .to_string();
     println!("cargo:rerun-if-changed={stars_h}");
 
     let out_dir = env::var("OUT_DIR").unwrap();
