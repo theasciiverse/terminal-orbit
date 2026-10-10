@@ -19,9 +19,15 @@ mod types;
 mod ui;
 
 fn main() {
-    if let Err(e) = app::run() {
-        eprintln!("error: {e}");
-        std::process::exit(1);
+    match app::run() {
+        Ok(()) => {}
+        // the title screen ends the game loop with these on purpose (q, Esc,
+        // the Quit option, Ctrl+C): a normal exit, not a failure
+        Err(e) if e.kind() == std::io::ErrorKind::Interrupted || e.to_string() == "quit" => {}
+        Err(e) => {
+            eprintln!("error: {e}");
+            std::process::exit(1);
+        }
     }
 }
 
