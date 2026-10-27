@@ -9,6 +9,7 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 
+use crate::renderer::projection::OrbitShot;
 use crate::autopilot::{find_nearest_planet, tick_autopilot, AutopilotMode};
 use crate::combat::{fire_missile, move_booms, move_missiles};
 use crate::config::{read_prefs, write_prefs, Prefs};
@@ -78,6 +79,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
     let mut show_lines  = false;
     let mut paused = false;
     let mut orbit_cam = false;
+    let mut orbit_shot = OrbitShot::Above;
     let mut autopilot = AutopilotMode::Off;
     let mut input = InputState::default();
     let mut last_tick = Instant::now();
@@ -94,7 +96,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
             Screen::Title(sel) => render_title(frame, *sel, &saves_cache),
             Screen::Briefing { scores } => briefing::render(frame, &world, scores),
             Screen::Playing => {
-                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names, paused, show_texture, &textures, orbit_cam, autopilot, show_lines)
+                crate::hud::panels::render(frame, &world, &stars, dense_stars, show_orrery, show_names, paused, show_texture, &textures, orbit_cam, orbit_shot, autopilot, show_lines)
             }
             Screen::LoadMenu { slots, sel } => render_load_menu(frame, slots, *sel),
         })?;
@@ -140,7 +142,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                 }
 
                 Screen::Playing => {
-                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &mut world)? {
+                    if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut orbit_shot, &mut autopilot, &mut paused, &mut world)? {
                         // Q — save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
@@ -149,7 +151,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
                     }
                     while event::poll(Duration::ZERO)? {
                         let ev2 = event::read()?;
-                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut autopilot, &mut paused, &mut world)?;
+                        handle_playing_event(ev2, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut orbit_shot, &mut autopilot, &mut paused, &mut world)?;
                     }
                 }
 
@@ -324,6 +326,7 @@ fn handle_playing_event(
     show_texture: &mut bool,
     show_lines: &mut bool,
     orbit_cam: &mut bool,
+    orbit_shot: &mut OrbitShot,
     autopilot: &mut AutopilotMode,
     paused: &mut bool,
     world: &mut World,
@@ -382,7 +385,21 @@ fn handle_playing_event(
             KeyCode::Char('o')                  => *show_orrery  = !*show_orrery,
             KeyCode::Char('n')                  => *show_names   = !*show_names,
             KeyCode::Char('t')                  => *show_texture = !*show_texture,
-            KeyCode::Char('c')                  => *orbit_cam    = !*orbit_cam,
+            KeyCode::Char('c') => {
+                // In orbit C cycles the two standard-orbit shots and the cockpit.
+                if *autopilot != AutopilotMode::Off {
+                    match (*orbit_cam, *orbit_shot) {
+                        (true, OrbitShot::Above) => *orbit_shot = OrbitShot::Below,
+                        (true, OrbitShot::Below) => *orbit_cam = false,
+                        (false, _) => {
+                            *orbit_cam = true;
+                            *orbit_shot = OrbitShot::Above;
+                        }
+                    }
+                } else {
+                    *orbit_cam = !*orbit_cam;
+                }
+            }
             KeyCode::Char('g') => {
                 // Toggle orbit autopilot on nearest planet.
                 if *autopilot != AutopilotMode::Off {

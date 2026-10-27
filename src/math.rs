@@ -45,12 +45,14 @@ impl Vec3 {
     }
 
     /// Squared distance between two points (Dist2 in util.c).
+    #[allow(dead_code)] // util.c kernel, kept complete and tested
     pub fn dist2(self, other: Self) -> f64 {
         (self - other).mag2()
     }
 
     /// Find a vector perpendicular to self (Perp in util.c).
     /// Ported verbatim — preserves the exact case logic from util.c.
+    #[allow(dead_code)] // util.c kernel, kept complete and tested
     pub fn perp(self) -> Self {
         let (x, y, z) = (self.x, self.y, self.z);
         if x != 0.0 && y != 0.0 {

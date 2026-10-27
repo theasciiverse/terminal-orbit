@@ -2,17 +2,27 @@ use crate::math::Vec3;
 use crate::types::Player;
 
 // Standard-orbit camera framing, in planet radii (see Camera::standard_orbit).
-const STD_ORBIT_BACK:  f64 = 0.30;
-const STD_ORBIT_UP:    f64 = 0.12;
-const STD_ORBIT_SIDE:  f64 = 0.10;
-const STD_ORBIT_AHEAD: f64 = 0.20;
-/// How far below the frame centre the horizon sits (radians; half the
-/// vertical field of view is 30 degrees).
-const STD_ORBIT_HORIZON: f64 = 20.0 * std::f64::consts::PI / 180.0;
-const STD_ORBIT_MIN_TILT: f64 = 5.0 * std::f64::consts::PI / 180.0;
+/// Camera distance outside the ship's orbit.
+const STD_ORBIT_OUT:   f64 = 0.16;
+/// Camera distance behind (Above shot) or ahead of (Below shot) the ship.
+const STD_ORBIT_ALONG: f64 = 0.42;
+/// Camera height above (Above shot) or below (Below shot) the equatorial plane.
+const STD_ORBIT_HIGH:  f64 = 0.06;
+/// How far the view turns from the planet toward the ship (0 = planet, 1 = ship).
+const STD_ORBIT_AIM:   f64 = 0.85;
 /// Size of the player ship drawn in the standard-orbit shot, in planet radii
 /// per model unit (the model is 6 units nose to tail).
-pub const STD_ORBIT_SHIP_SCALE: f64 = 0.02;
+pub const STD_ORBIT_SHIP_SCALE: f64 = 0.028;
+
+/// The two standard-orbit shots, both looking across the ship at the planet
+/// with north up and the ship on the equator.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum OrbitShot {
+    /// From above and slightly behind; the planet fills the left.
+    Above,
+    /// From below and slightly in front; the planet fills the right.
+    Below,
+}
 
 pub struct Camera {
     pub pos:       Vec3,
@@ -73,41 +83,43 @@ impl Camera {
         }
     }
 
-    /// The classic starship-in-orbit shot: behind, above and a little to the
-    /// side of the ship, which sits in the upper middle of the frame with the
-    /// planet's curved horizon across the lower part.  All distances scale
-    /// with the planet radius so the shot looks the same at any world.
+    /// Standard-orbit shot: from outside the orbit, just above or below the
+    /// equatorial plane, looking across the ship toward the planet, north
+    /// up.  All distances scale with the planet radius so the shot looks the
+    /// same at any world.
     pub fn standard_orbit(
         ship_pos: Vec3,
         ship_view: Vec3,
         planet_pos: Vec3,
         planet_radius: f64,
+        shot: OrbitShot,
         w_dots: u32,
         h_dots: u32,
     ) -> Self {
-        let outward = (ship_pos - planet_pos).normalize();
-        // Forward along the ground track, flattened onto the local horizon.
-        let mut fwd = ship_view - outward * ship_view.dot(outward);
+        let north = Vec3::new(0.0, 0.0, 1.0);
+        let offset = ship_pos - planet_pos;
+        let mut outward = Vec3::new(offset.x, offset.y, 0.0);
+        if outward.mag2() < 1e-12 {
+            outward = Vec3::new(1.0, 0.0, 0.0);
+        }
+        let outward = outward.normalize();
+        // Direction of travel along the equator.
+        let mut fwd = ship_view - outward * ship_view.dot(outward) - north * ship_view.z;
         if fwd.mag2() < 1e-10 {
-            fwd = outward.cross(Vec3::new(0.0, 0.0, 1.0));
+            fwd = outward.cross(north);
         }
         let fwd = fwd.normalize();
-        let side = fwd.cross(outward).normalize();
-        let r = planet_radius;
-        let pos = ship_pos - fwd * (STD_ORBIT_BACK * r)
-            + outward * (STD_ORBIT_UP * r)
-            + side * (STD_ORBIT_SIDE * r);
 
-        // Aim along the ground track, turned in toward the ship, then tilted
-        // down so the horizon (which dips below level by acos(R / d) seen
-        // from distance d) sits in the lower third of the frame.
-        let ahead = (fwd * (STD_ORBIT_BACK + STD_ORBIT_AHEAD) - side * STD_ORBIT_SIDE).normalize();
-        let cam_up = (pos - planet_pos).normalize();
-        let dip = (r / (pos - planet_pos).mag2().sqrt()).min(1.0).acos();
-        let tilt = (dip - STD_ORBIT_HORIZON).max(STD_ORBIT_MIN_TILT);
-        let view = ahead * tilt.cos() - cam_up * tilt.sin();
-        let target = pos + view;
-        Camera::look_at(pos, target, cam_up, w_dots, h_dots)
+        let r = planet_radius;
+        let (along, high) = match shot {
+            OrbitShot::Above => (-STD_ORBIT_ALONG, STD_ORBIT_HIGH),
+            OrbitShot::Below => (STD_ORBIT_ALONG, -STD_ORBIT_HIGH),
+        };
+        let pos = ship_pos + outward * (STD_ORBIT_OUT * r) + fwd * (along * r) + north * (high * r);
+        let to_ship = (ship_pos - pos).normalize();
+        let to_planet = (planet_pos - pos).normalize();
+        let view = (to_ship * STD_ORBIT_AIM + to_planet * (1.0 - STD_ORBIT_AIM)).normalize();
+        Camera::look_at(pos, pos + view, north, w_dots, h_dots)
     }
 
     /// Camera placed behind and above the ship, looking diagonally past it

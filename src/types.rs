@@ -6,18 +6,9 @@ use crate::model::Model;
 pub enum FlightModel {
     #[default]
     Newtonian,
+    /// Throttle-and-point flight from player.c; ported, not yet selectable.
+    #[allow(dead_code)]
     Arcade,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum GameState {
-    #[default]
-    Normal,
-    Init,
-    Dead1,
-    Dead2,
-    LoadGame,
-    GetText,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -30,14 +21,6 @@ pub enum Strategy {
     Ferry,
     /// Unarmed transport: flies its Route once and holds at the last stop.
     Convoy,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum LockType {
-    #[default]
-    Enemy,
-    Friendly,
-    Planet,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -84,7 +67,6 @@ pub struct GameEvent {
 #[derive(Debug, Clone, Default)]
 pub struct Player {
     pub name: String,
-    pub model_name: String,
     pub pos: Vec3,
     pub up: Vec3,
     pub view: Vec3,
@@ -108,9 +90,7 @@ pub struct Player {
     pub weapon: usize,
     pub msl_idle: f64,
     pub waypoint: usize,
-    pub dead_timer: f64,
     pub still: bool,
-    pub viewlock: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -176,8 +156,6 @@ pub struct Planet {
     pub radius: f64,
     pub oblicity: f64,
     pub radius2: f64,
-    pub range2: f64,
-    pub absrange2: f64,
     pub mass: f64,
     pub name: String,
     pub is_moon: bool,
@@ -211,7 +189,6 @@ pub struct Boom {
 #[derive(Debug, Clone, Default)]
 pub struct Lock {
     pub target: Option<usize>,
-    pub lock_type: LockType,
 }
 
 #[derive(Debug, Clone)]
@@ -264,15 +241,15 @@ pub struct World {
     pub abs_t: f64,
 
     pub gravity: bool,
+    /// Draw planets' orbital paths (renderer::planets::draw_orbits); ported
+    /// from orbit.c but not yet bound to a key.
+    #[allow(dead_code)]
     pub orbit_planets: bool,
     pub full_stop: bool,
     pub warpspeed: bool,
-    pub superwarp: bool,
-    pub state: GameState,
     pub vulnerable: bool,
     pub compression: f64,
     pub real_distances: bool,
-    pub paused: bool,
 
     /// Current mission filename (e.g. "train01.msn").
     pub mission_file: String,
@@ -292,7 +269,7 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        let mut targets: Vec<Target> = (0..NTARGETS).map(|_| {
+        let targets: Vec<Target> = (0..NTARGETS).map(|_| {
             let mut t = Target::default();
             t.weapon = NPLAYER_WEAPONS;
             t.shields = 100.0;
@@ -303,8 +280,6 @@ impl World {
             t.right = t.up.cross(t.view).normalize();
             t
         }).collect();
-        // Silence unused warning — targets is populated above.
-        let _ = &targets;
 
         let mut w = World {
             player: Player::default(),
@@ -326,12 +301,9 @@ impl World {
             orbit_planets: false,
             full_stop: false,
             warpspeed: false,
-            superwarp: false,
-            state: GameState::Normal,
             vulnerable: true,
             compression: 1.0,
             real_distances: false,
-            paused: false,
             mission_file: String::new(),
             briefing: String::new(),
             mission_verbose: false,

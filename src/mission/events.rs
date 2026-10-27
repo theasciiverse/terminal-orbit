@@ -60,20 +60,6 @@ pub fn do_events(world: &mut World) -> Option<String> {
     None
 }
 
-/// Notify all Destroy-triggered events that target `t` was destroyed.
-pub fn notify_destroy(world: &mut World, target_name: &str) {
-    let n = world.events.len();
-    for e in 0..n {
-        if world.events[e].pending
-            && world.events[e].enabled
-            && world.events[e].trigger == EventTrigger::Destroy
-            && world.events[e].cvalue.eq_ignore_ascii_case(target_name)
-        {
-            fire_event(world, e);
-        }
-    }
-}
-
 /// Execute all actions for event `e`.  Returns `Some(filename)` on LoadMission.
 pub fn fire_event(world: &mut World, e: usize) -> Option<String> {
     world.events[e].pending = false;

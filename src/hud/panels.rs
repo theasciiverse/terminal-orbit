@@ -12,6 +12,7 @@ use ratatui::{
 use crate::autopilot::AutopilotMode;
 use crate::constants::KM_TO_UNITS1;
 use crate::math::Vec3;
+use crate::renderer::projection::OrbitShot;
 use crate::renderer::{
     canvas::BrailleCanvas,
     planets::{draw_single_planet, planet_color},
@@ -44,6 +45,7 @@ pub fn render(
     show_texture: bool,
     textures: &HashMap<String, PlanetTexture>,
     orbit_cam: bool,
+    orbit_shot: OrbitShot,
     autopilot: AutopilotMode,
     show_lines: bool,
 ) {
@@ -54,7 +56,7 @@ pub fn render(
         .constraints([Constraint::Min(5), Constraint::Length(HUD_HEIGHT)])
         .split(area);
 
-    render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names, show_texture, textures, orbit_cam, autopilot, show_lines);
+    render_viewport(frame, chunks[0], world, stars, dense, show_orrery, show_names, show_texture, textures, orbit_cam, orbit_shot, autopilot, show_lines);
     render_hud(frame, chunks[1], world, autopilot);
 
     if paused {
@@ -73,6 +75,7 @@ fn render_viewport(
     show_texture: bool,
     textures: &HashMap<String, PlanetTexture>,
     orbit_cam: bool,
+    orbit_shot: OrbitShot,
     autopilot: AutopilotMode,
     show_lines: bool,
 ) {
@@ -103,6 +106,7 @@ fn render_viewport(
             world.player.view,
             planet.pos,
             planet.radius,
+            orbit_shot,
             w_dots,
             h_dots,
         )

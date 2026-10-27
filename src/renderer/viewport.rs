@@ -1,27 +1,10 @@
 use std::f64::consts::PI;
 
-use crate::combat::explosions::{draw_booms, draw_missiles};
 use crate::math::Vec3;
 use crate::model::Model;
 use crate::types::{Player, Target, World};
 use super::canvas::BrailleCanvas;
-use super::planets::draw_planets;
 use super::projection::Camera;
-
-pub fn draw_scene(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
-    for target in &world.targets {
-        if target.age > 0.0 && !target.hidden && !target.invisible {
-            if let Some(midx) = target.model {
-                if midx < world.models.len() {
-                    draw_target_ship(canvas, camera, target, &world.models[midx]);
-                }
-            }
-        }
-    }
-    draw_planets(canvas, camera, world);
-    draw_missiles(canvas, camera, world);
-    draw_booms(canvas, camera, world);
-}
 
 /// Draw only enemy (non-friendly) ships.
 pub fn draw_enemy_ships(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {

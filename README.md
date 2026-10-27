@@ -57,7 +57,7 @@ or after building:
 | Key | Action |
 |-----|--------|
 | `G` | Toggle orbit autopilot (locks onto nearest planet) |
-| `C` | Toggle third-person camera |
+| `C` | Toggle third-person camera (in orbit: cycle the two orbit shots and the cockpit) |
 | `T` | Toggle planet textures (raycasted PPM maps) |
 | `B` | Toggle constellation lines |
 | `N` | Toggle names (planets, targets, constellation labels) |
@@ -86,7 +86,7 @@ Press `B` to overlay IAU stick-figure constellation lines for 14 major constella
 Press `T` to switch from wireframe to full-viewport raycasted textures. Each planet is ray-sphere intersected per terminal cell, UV-mapped with oblicity rotation, and lit with Lambert diffuse from Sol (40% ambient so night side stays visible). 38 planet maps included.
 
 ### Orbit Autopilot
-Press `G` and the ship flies itself into standard orbit around the nearest planet: an equatorial circle at 1.25 planet radii, nose prograde, dorsal side to space. The orbit speed matches the game's own gravity, so the orbit holds after you press `G` again to release it (with gravity on in the prefs). `G` also switches to the standard-orbit camera, the classic starship-in-orbit shot: the ship in the middle of the frame and the planet's curved horizon across the lower part, scaled to the planet so it looks the same at Earth or Phobos. Press `T` for the textured planet. `C` toggles back to the cockpit view.
+Press `G` and the ship flies itself into standard orbit around the nearest planet: a westward equatorial circle at 1.25 planet radii, flying level along the equator with its top to north. The orbit speed matches the game's own gravity, so the orbit holds after you press `G` again to release it (with gravity on in the prefs). `G` also switches to the standard-orbit camera, the classic starship-in-orbit shot looking across the ship at the planet, north up. `C` cycles two shots and the cockpit: from above and slightly behind with the planet filling the left, then from below and slightly in front with the planet on the right. Both scale with the planet, so they look the same at Earth or Phobos. Press `T` for the textured planet.
 
 ### Mission System & Campaign
 Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and the complete event engine: Alarm/Approach/Depart/StopNear/Score/Destroy/Shields/Reach triggers driving Message/Hide/Unhide/Score/Destroy/Cargo/Waypoint/LoadMission/Boom/Stop actions.

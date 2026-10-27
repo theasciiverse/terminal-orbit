@@ -24,10 +24,6 @@ impl BrailleCanvas {
         }
     }
 
-    pub fn clear(&mut self) {
-        self.inner.clear();
-    }
-
     /// Draw a line between two braille-dot coordinates.
     /// Silently ignores calls where either endpoint is out of canvas bounds.
     pub fn line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32) {

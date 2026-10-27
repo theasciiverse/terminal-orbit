@@ -76,7 +76,7 @@ BOOM_TIME=1.0s, CONSAGE=3.0s (console message fade), MAXDELTAT=0.1s
 | Y | Cycle targets |
 | F | Cycle weapons |
 | G | Toggle orbit autopilot (flies to standard orbit, 1.25 planet radii) |
-| C | Toggle third-person camera |
+| C | Toggle third-person camera; in orbit cycles shot Above, shot Below, cockpit |
 | T | Toggle planet textures |
 | B | Toggle constellation lines |
 | N | Toggle names (planets, targets, constellation labels) |
@@ -206,11 +206,15 @@ Port `util.c` to `src/math.rs`: `Vec3`, `RotateAbout` (Rodrigues formula), `Dotp
 - Next: more Episode Two missions, then a free-contract mode (delivery and bounty jobs at
   stations) reusing the same stations and traffic
 - `loader.rs` test loads every mission and checks LoadMission/Enable targets and route stops
-- Standard orbit: G flies to an equatorial orbit at 1.25 radii (`autopilot.rs`), orbit speed
+- Standard orbit: G flies to a westward equatorial orbit at 1.25 radii, level with top to north
+  (`autopilot.rs`; westward so the shots below come out with north up), orbit speed
   derived from `physics::gravity` (per-frame pull with RMIN clamp, as orbit.c; the old
   sqrt(Gm/r) was ~5x too slow), centripetal feed-forward when prefs gravity is off;
-  `Camera::standard_orbit` frames ship + horizon, tilt computed from horizon dip, all in
-  planet radii
+  `Camera::standard_orbit` has two `OrbitShot`s looking across the ship at the planet, north
+  up: Above (behind, planet left) and Below (in front, planet right), all in planet radii
+- Warnings cleaned to zero: dead C-header constants/fields removed; Arcade flight model and
+  `draw_orbits` (orbital paths, `World::orbit_planets`) kept with `allow(dead_code)`, ported
+  but not yet bound to a key
 
 ### Phase 10 — Multiplayer (not started)
 - `src/net/protocol.rs`: PositionUpdate, FireMissile, TargetDestroyed, MissionLoad, Ping/Pong, PlayerJoin/Leave

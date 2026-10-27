@@ -20,38 +20,6 @@ const RINGS: &[(usize, f64)] = &[
 
 const KM_TO_UNITS: f64 = crate::constants::KM_TO_UNITS1;
 
-pub fn draw_planets(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
-    if world.orbit_planets {
-        draw_orbits(canvas, camera, world);
-    }
-    for p in 0..world.planets.len() {
-        let planet = &world.planets[p];
-        if planet.hidden || planet.radius <= 0.0 {
-            continue;
-        }
-        let dp = planet.pos - camera.pos;
-        let abs_range2 = dp.mag2();
-        // Range in planet radii (r2 from C code).
-        let r = if planet.radius > 0.0 { abs_range2.sqrt() / planet.radius } else { f64::MAX };
-
-        if r < 5.0 {
-            draw_sphere(canvas, camera, planet, 12, 12);
-            draw_rings_for(canvas, camera, p, world);
-        } else if r < 25.0 {
-            draw_sphere(canvas, camera, planet, 8, 8);
-            draw_rings_for(canvas, camera, p, world);
-        } else if r < 200.0 {
-            draw_sphere(canvas, camera, planet, 4, 4);
-            draw_rings_for(canvas, camera, p, world);
-        } else if r < 50_000.0 {
-            // Single dot — large planet dot at moderate range.
-            let _ = camera.project_point(planet.pos).map(|(x, y)| {
-                canvas.set(x, y);
-            });
-        }
-        // Beyond 50 000 radii: skip entirely.
-    }
-}
 
 // ─── Wireframe sphere ────────────────────────────────────────────────────────
 
@@ -144,7 +112,10 @@ fn draw_ring(canvas: &mut BrailleCanvas, camera: &Camera, planet: &Planet, ring_
 
 // ─── Orbital paths ────────────────────────────────────────────────────────────
 
-fn draw_orbits(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
+/// Planets' orbital paths, ported from orbit.c; not yet bound to a key
+/// (World::orbit_planets).
+#[allow(dead_code)]
+pub fn draw_orbits(canvas: &mut BrailleCanvas, camera: &Camera, world: &World) {
     const N_ORBIT_PTS: usize = 64;
 
     for p in 1..world.planets.len() {
