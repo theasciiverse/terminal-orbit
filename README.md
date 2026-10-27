@@ -1,30 +1,34 @@
 # terminal-orbit
 
-A terminal UI port of [ORBIT](http://genesis.nred.ma.us/orbit/) — Steve Belczyk's 1999 freeware space combat simulator — rendered entirely in the terminal using Unicode braille characters and [ratatui](https://github.com/ratatui/ratatui).
+**THE ALIENS ARE ALREADY HERE.**
 
-The original game taught real Newtonian orbital mechanics through combat. This port preserves that physics and the full original campaign while replacing the OpenGL renderer with a 3D braille viewport, raycasted planet textures, a real star catalog with constellation lines, and TUI HUD panels.
+It started with a strange alien construction, quietly gathering energy, and
+then the alien fighters came. Fly a small starfighter through the real solar
+system with real Newtonian physics: thrust, brake, coast, swing into orbit,
+match speeds and dock, then do it again with aliens on your tail, from the
+Earth and the Moon to Mars, Jupiter, the rings of Saturn, Neptune and Pluto.
 
-## Build
+This is a terminal port of [ORBIT](http://genesis.nred.ma.us/orbit/), Steve
+Belczyk's 1999 freeware space combat simulator, from his own C source: the
+whole original campaign, the first part of a new Episode Two, and space drawn
+in Unicode Braille with [ratatui](https://github.com/ratatui/ratatui), with
+raycast planet surfaces and a real star catalogue.
 
-```sh
-cargo build --release
+## Play
+
+With [av](https://asciiverse.sh), the Asciiverse client:
+
+```
+av install terminal-orbit
+av play terminal-orbit
 ```
 
-Requires Rust 1.75+.
+Or download the archive for your system from this repository's Releases,
+unpack it and run `./terminal-orbit` from that folder (it reads the
+`missions/`, `models/` and `maps/` beside it).
 
-## Run
-
-Must be run from the directory that contains the `missions/`, `models/`, and `maps/` folders:
-
-```sh
-cargo run --release
-```
-
-or after building:
-
-```sh
-./target/release/terminal-orbit
-```
+To build it yourself: `cargo build --release` (Rust 1.75 or newer), then run
+it from the repository folder.
 
 ## Controls
 
@@ -77,7 +81,7 @@ Ships, planets, and orbital paths rendered as Unicode braille dot clusters at 2�
 ### Real Star Field
 2000 stars from the Yale Bright Star Catalogue (embedded in the original ORBIT source), rendered with magnitude-based sizing and color:
 - Bright stars (mag < 1.5): white 2×2 braille cluster
-- Medium stars (1.5–3.5): light gray
+- Medium stars (1.5-3.5): light gray
 - Dim stars (3.5+): dark gray single dot
 
 Press `B` to overlay IAU stick-figure constellation lines for 14 major constellations. Press `N` to add constellation name labels.
@@ -97,13 +101,13 @@ Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and t
 
 | System | Missions |
 |--------|----------|
-| Earth orbit (training) | train01–04 |
-| Mars | mars1–5 |
-| Jupiter | jupiter1–5 |
-| Saturn | saturn01–04 |
-| Titan / Dione | titan01–03, dione01 |
+| Earth orbit (training) | train01-04 |
+| Mars | mars1-5 |
+| Jupiter | jupiter1-5 |
+| Saturn | saturn01-04 |
+| Titan / Dione | titan01-03, dione01 |
 | Uranus | uranus01 |
-| Neptune | neptune1–2 |
+| Neptune | neptune1-2 |
 | Pluto | pluto1 |
 
 ### Episode Two: Open Skies
@@ -136,7 +140,7 @@ On top of the original ORBIT keywords:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                     │
-│   (3D braille viewport — ships, textured planets, real starfield)  │
+│   (3D braille viewport: ships, textured planets, real starfield)  │
 │                                                                     │
 │  console messages appear here in green (3s fade)                   │
 ├─────────────┬───────────────────────────────────────────────────────┤
@@ -172,33 +176,33 @@ vulnerable = false   # set true for god mode
 
 ```
 src/
-  app.rs          — game loop, key bindings, screen state machine
-  autopilot.rs    — orbit insertion (Z×r̂ prograde, radial damping)
-  config.rs       — prefs (player name, gravity, etc.)
-  save.rs         — save slots
-  scores.rs       — per-mission high scores
-  physics.rs      — Newtonian flight + gravity + warp
-  ai.rs           — 8 AI strategies (DoNothing, Sit1-4, Hunt1-4)
-  math.rs         — Vec3 + Rodrigues rotation (ported from util.c)
-  planet_data.rs  — real solar system constants
-  mission/        — .msn tokenizer, keyword handlers, event engine
-  combat/         — weapons, missiles, explosions, scoring
+  app.rs:          game loop, key bindings, screen state machine
+  autopilot.rs:    orbit insertion (Z×r̂ prograde, radial damping)
+  config.rs:       prefs (player name, gravity, etc.)
+  save.rs:         save slots
+  scores.rs:       per-mission high scores
+  physics.rs:      Newtonian flight + gravity + warp
+  ai.rs:           8 AI strategies (DoNothing, Sit1-4, Hunt1-4)
+  math.rs:         Vec3 + Rodrigues rotation (ported from util.c)
+  planet_data.rs:  real solar system constants
+  mission/:        .msn tokenizer, keyword handlers, event engine
+  combat/:         weapons, missiles, explosions, scoring
   renderer/
-    projection.rs — camera (first-person + third-person)
-    canvas.rs     — drawille braille adapter
-    viewport.rs   — scene draw, wireframe ships
-    planets.rs    — 5-LOD wireframe spheres, per-planet color
-    stars.rs      — magnitude-band rendering, constellation lines
-    texture.rs    — PPM P6 loader, raycasted Lambert-lit textures
+    projection.rs: camera (first-person + third-person)
+    canvas.rs:     drawille braille adapter
+    viewport.rs:   scene draw, wireframe ships
+    planets.rs:    5-LOD wireframe spheres, per-planet color
+    stars.rs:      magnitude-band rendering, constellation lines
+    texture.rs:    PPM P6 loader, raycasted Lambert-lit textures
   hud/
-    radar.rs      — RadarCoords port from hud.c
-    panels.rs     — stats panel, message display, layer compositor
-  model/          — .tri and AC3D wireframe loaders
-  ui/             — title screen, briefing, orrery, console
-build.rs          — parses stars.h → star_data.rs (Yale catalog)
+    radar.rs:      RadarCoords port from hud.c
+    panels.rs:     stats panel, message display, layer compositor
+  model/:          .tri and AC3D wireframe loaders
+  ui/:             title screen, briefing, orrery, console
+build.rs:          parses stars.h → star_data.rs (Yale catalog)
 ```
 
 ## Credits
 
-Original ORBIT game © 1999 Steve Belczyk — released as freeware.  
+Original ORBIT game © 1999 Steve Belczyk: released as freeware.  
 Terminal port written in Rust using [ratatui](https://github.com/ratatui/ratatui) and [drawille](https://github.com/asciimoo/drawille).
