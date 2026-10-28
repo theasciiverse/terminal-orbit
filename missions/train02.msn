@@ -82,7 +82,7 @@ Event
 	Action Message
 	Value
 	{
-		You have reached Mars — first objective complete!\\
+		You have reached Mars: first objective complete!\\
 		Now turn around and head back to Earth.\\
 		Point at Earth with A/D and I/K, then thrust with W.
 	}

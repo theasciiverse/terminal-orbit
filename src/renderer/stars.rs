@@ -11,9 +11,9 @@ pub fn all_stars() -> Vec<(Vec3, f32)> {
 
 /// Draw stars split across three magnitude-band canvases.
 ///   c_bright : mag < 1.5  → rendered white
-///   c_medium : 1.5–3.5    → rendered light gray
-///   c_dim    : 3.5–5.5    → rendered dark gray (only in dense mode)
-/// Bright stars get a 2×2 braille cluster; mag 1.5–2.5 get a 2×1 pair; dimmer = single dot.
+///   c_medium : 1.5-3.5    → rendered light gray
+///   c_dim    : 3.5-5.5    → rendered dark gray (only in dense mode)
+/// Bright stars get a 2×2 braille cluster; mag 1.5-2.5 get a 2×1 pair; dimmer = single dot.
 pub fn draw_stars(
     c_bright: &mut BrailleCanvas,
     c_medium: &mut BrailleCanvas,
@@ -28,20 +28,20 @@ pub fn draw_stars(
         let Some((px, py)) = camera.project_direction(star) else { continue };
 
         if mag < 1.5 {
-            // Very bright — 2×2 cluster so it pops.
+            // Very bright: 2×2 cluster so it pops.
             c_bright.set(px, py);
             c_bright.set(px + 1, py);
             c_bright.set(px, py + 1);
             c_bright.set(px + 1, py + 1);
         } else if mag < 2.5 {
-            // Bright — 2×1 pair.
+            // Bright: 2×1 pair.
             c_medium.set(px, py);
             c_medium.set(px + 1, py);
         } else if mag < 3.5 {
-            // Medium — single dot.
+            // Medium: single dot.
             c_medium.set(px, py);
         } else {
-            // Dim — single dot, dark gray.
+            // Dim: single dot, dark gray.
             c_dim.set(px, py);
         }
     }
@@ -99,110 +99,110 @@ pub const CONSTELLATION_LABELS: &[(&str, f32, f32)] = &[
 const CONSTELLATION_LINES: &[((f32, f32), (f32, f32))] = &[
     // ── Orion ──────────────────────────────────────────────────────────────
     // Shoulders
-    ((5.919, 7.407),   (5.419, 6.350)),   // Betelgeuse – Bellatrix
+    ((5.919, 7.407),   (5.419, 6.350)),   // Betelgeuse to Bellatrix
     // Head
-    ((5.919, 7.407),   (5.585, 9.934)),   // Betelgeuse – Meissa
-    ((5.419, 6.350),   (5.585, 9.934)),   // Bellatrix  – Meissa
+    ((5.919, 7.407),   (5.585, 9.934)),   // Betelgeuse to Meissa
+    ((5.419, 6.350),   (5.585, 9.934)),   // Bellatrix to Meissa
     // Shoulders to belt
-    ((5.919, 7.407),   (5.533, -0.299)),  // Betelgeuse – Mintaka
-    ((5.419, 6.350),   (5.533, -0.299)),  // Bellatrix  – Mintaka
+    ((5.919, 7.407),   (5.533, -0.299)),  // Betelgeuse to Mintaka
+    ((5.419, 6.350),   (5.533, -0.299)),  // Bellatrix to Mintaka
     // Belt
-    ((5.533, -0.299),  (5.604, -1.202)),  // Mintaka – Alnilam
-    ((5.604, -1.202),  (5.679, -1.943)),  // Alnilam – Alnitak
+    ((5.533, -0.299),  (5.604, -1.202)),  // Mintaka to Alnilam
+    ((5.604, -1.202),  (5.679, -1.943)),  // Alnilam to Alnitak
     // Belt to feet
-    ((5.679, -1.943),  (5.242, -8.202)),  // Alnitak – Rigel
-    ((5.679, -1.943),  (5.797, -9.670)),  // Alnitak – Saiph
-    ((5.242, -8.202),  (5.797, -9.670)),  // Rigel   – Saiph
+    ((5.679, -1.943),  (5.242, -8.202)),  // Alnitak to Rigel
+    ((5.679, -1.943),  (5.797, -9.670)),  // Alnitak to Saiph
+    ((5.242, -8.202),  (5.797, -9.670)),  // Rigel to Saiph
 
     // ── Ursa Major (Big Dipper) ────────────────────────────────────────────
-    ((13.792, 49.313), (13.399, 54.926)), // Alkaid  – Mizar
-    ((13.399, 54.926), (12.900, 55.960)), // Mizar   – Alioth
-    ((12.900, 55.960), (12.257, 57.033)), // Alioth  – Megrez
-    ((12.257, 57.033), (11.897, 53.695)), // Megrez  – Phecda
-    ((11.897, 53.695), (11.031, 56.383)), // Phecda  – Merak
-    ((11.031, 56.383), (11.062, 61.751)), // Merak   – Dubhe
-    ((11.062, 61.751), (12.257, 57.033)), // Dubhe   – Megrez (bowl)
+    ((13.792, 49.313), (13.399, 54.926)), // Alkaid to Mizar
+    ((13.399, 54.926), (12.900, 55.960)), // Mizar to Alioth
+    ((12.900, 55.960), (12.257, 57.033)), // Alioth to Megrez
+    ((12.257, 57.033), (11.897, 53.695)), // Megrez to Phecda
+    ((11.897, 53.695), (11.031, 56.383)), // Phecda to Merak
+    ((11.031, 56.383), (11.062, 61.751)), // Merak to Dubhe
+    ((11.062, 61.751), (12.257, 57.033)), // Dubhe to Megrez (bowl)
 
     // ── Cassiopeia (the W) ─────────────────────────────────────────────────
-    ((0.153,  59.151), (0.675,  56.537)), // Caph    – Schedar
-    ((0.675,  56.537), (0.945,  60.717)), // Schedar – Gamma
-    ((0.945,  60.717), (1.430,  60.235)), // Gamma   – Ruchbah
-    ((1.430,  60.235), (1.907,  63.670)), // Ruchbah – Segin
+    ((0.153,  59.151), (0.675,  56.537)), // Caph to Schedar
+    ((0.675,  56.537), (0.945,  60.717)), // Schedar to Gamma
+    ((0.945,  60.717), (1.430,  60.235)), // Gamma to Ruchbah
+    ((1.430,  60.235), (1.907,  63.670)), // Ruchbah to Segin
 
     // ── Cygnus (Northern Cross) ────────────────────────────────────────────
-    ((19.512, 27.960), (20.370, 40.257)), // Albireo  – Sadr
-    ((20.370, 40.257), (20.691, 45.280)), // Sadr     – Deneb
-    ((19.749, 45.131), (20.370, 40.257)), // Fawaris  – Sadr
-    ((20.370, 40.257), (20.770, 33.970)), // Sadr     – Gienah
+    ((19.512, 27.960), (20.370, 40.257)), // Albireo to Sadr
+    ((20.370, 40.257), (20.691, 45.280)), // Sadr to Deneb
+    ((19.749, 45.131), (20.370, 40.257)), // Fawaris to Sadr
+    ((20.370, 40.257), (20.770, 33.970)), // Sadr to Gienah
 
     // ── Scorpius ───────────────────────────────────────────────────────────
-    ((16.091, -19.805), (16.005, -22.622)), // Graffias – Dschubba
-    ((16.005, -22.622), (16.352, -25.593)), // Dschubba – Alniyat
-    ((16.352, -25.593), (16.490, -26.432)), // Alniyat  – Antares
-    ((16.490, -26.432), (16.598, -28.216)), // Antares  – Tau
-    ((16.598, -28.216), (16.836, -34.293)), // Tau      – mid-body
-    ((16.836, -34.293), (17.622, -42.998)), // mid      – Sargas
-    ((17.622, -42.998), (17.560, -37.104)), // Sargas   – Shaula
-    ((17.560, -37.104), (17.531, -37.296)), // Shaula   – Lesath
+    ((16.091, -19.805), (16.005, -22.622)), // Graffias to Dschubba
+    ((16.005, -22.622), (16.352, -25.593)), // Dschubba to Alniyat
+    ((16.352, -25.593), (16.490, -26.432)), // Alniyat to Antares
+    ((16.490, -26.432), (16.598, -28.216)), // Antares to Tau
+    ((16.598, -28.216), (16.836, -34.293)), // Tau to mid-body
+    ((16.836, -34.293), (17.622, -42.998)), // mid to Sargas
+    ((17.622, -42.998), (17.560, -37.104)), // Sargas to Shaula
+    ((17.560, -37.104), (17.531, -37.296)), // Shaula to Lesath
 
     // ── Leo (the Sickle) ──────────────────────────────────────────────────
-    ((10.139, 11.967),  (10.333, 19.841)), // Regulus  – Algieba
-    ((10.333, 19.841),  (10.278, 23.417)), // Algieba  – Adhafera
-    ((10.278, 23.417),  (10.123, 23.774)), // Adhafera – Rasalas
-    ((10.123, 23.774),  (9.765,  26.007)), // Rasalas  – Algenubi (head)
-    ((9.765,  26.007),  (10.139, 11.967)), // Algenubi – Regulus (close sickle)
-    ((10.139, 11.967),  (11.237, 15.430)), // Regulus  – Chertan (body)
-    ((11.237, 15.430),  (11.235, 20.524)), // Chertan  – Zosma
-    ((11.235, 20.524),  (10.333, 19.841)), // Zosma    – Algieba (back)
-    ((11.235, 20.524),  (11.817, 14.572)), // Zosma    – Denebola (tail)
+    ((10.139, 11.967),  (10.333, 19.841)), // Regulus to Algieba
+    ((10.333, 19.841),  (10.278, 23.417)), // Algieba to Adhafera
+    ((10.278, 23.417),  (10.123, 23.774)), // Adhafera to Rasalas
+    ((10.123, 23.774),  (9.765,  26.007)), // Rasalas to Algenubi (head)
+    ((9.765,  26.007),  (10.139, 11.967)), // Algenubi to Regulus (close sickle)
+    ((10.139, 11.967),  (11.237, 15.430)), // Regulus to Chertan (body)
+    ((11.237, 15.430),  (11.235, 20.524)), // Chertan to Zosma
+    ((11.235, 20.524),  (10.333, 19.841)), // Zosma to Algieba (back)
+    ((11.235, 20.524),  (11.817, 14.572)), // Zosma to Denebola (tail)
 
     // ── Gemini ─────────────────────────────────────────────────────────────
-    ((7.577, 31.888),  (7.755, 28.026)),   // Castor  – Pollux
-    ((7.577, 31.888),  (7.335, 21.982)),   // Castor  – Wasat
-    ((7.335, 21.982),  (6.629, 16.399)),   // Wasat   – Alhena
-    ((7.755, 28.026),  (7.741, 24.398)),   // Pollux  – Kappa
-    ((7.741, 24.398),  (6.629, 16.399)),   // Kappa   – Alhena
-    ((7.577, 31.888),  (6.289, 22.506)),   // Castor  – Propus (other arm)
-    ((7.755, 28.026),  (6.383, 22.514)),   // Pollux  – Tejat
+    ((7.577, 31.888),  (7.755, 28.026)),   // Castor to Pollux
+    ((7.577, 31.888),  (7.335, 21.982)),   // Castor to Wasat
+    ((7.335, 21.982),  (6.629, 16.399)),   // Wasat to Alhena
+    ((7.755, 28.026),  (7.741, 24.398)),   // Pollux to Kappa
+    ((7.741, 24.398),  (6.629, 16.399)),   // Kappa to Alhena
+    ((7.577, 31.888),  (6.289, 22.506)),   // Castor to Propus (other arm)
+    ((7.755, 28.026),  (6.383, 22.514)),   // Pollux to Tejat
 
     // ── Perseus ────────────────────────────────────────────────────────────
-    ((3.405, 49.861),  (3.136, 40.957)),   // Mirfak – Algol
-    ((3.405, 49.861),  (3.080, 53.506)),   // Mirfak – Gamma Per
-    ((3.405, 49.861),  (3.963, 31.884)),   // Mirfak – Atik
-    ((3.963, 31.884),  (3.987, 35.791)),   // Atik   – Menkib
+    ((3.405, 49.861),  (3.136, 40.957)),   // Mirfak to Algol
+    ((3.405, 49.861),  (3.080, 53.506)),   // Mirfak to Gamma Per
+    ((3.405, 49.861),  (3.963, 31.884)),   // Mirfak to Atik
+    ((3.963, 31.884),  (3.987, 35.791)),   // Atik to Menkib
 
     // ── Auriga ─────────────────────────────────────────────────────────────
-    ((5.278, 45.998),  (5.992, 44.947)),   // Capella    – Menkalinan
-    ((5.992, 44.947),  (5.995, 37.212)),   // Menkalinan – Mahasim
-    ((5.995, 37.212),  (4.950, 33.166)),   // Mahasim    – Hassaleh
-    ((4.950, 33.166),  (5.438, 28.608)),   // Hassaleh   – El Nath
-    ((5.438, 28.608),  (5.278, 45.998)),   // El Nath    – Capella
+    ((5.278, 45.998),  (5.992, 44.947)),   // Capella to Menkalinan
+    ((5.992, 44.947),  (5.995, 37.212)),   // Menkalinan to Mahasim
+    ((5.995, 37.212),  (4.950, 33.166)),   // Mahasim to Hassaleh
+    ((4.950, 33.166),  (5.438, 28.608)),   // Hassaleh to El Nath
+    ((5.438, 28.608),  (5.278, 45.998)),   // El Nath to Capella
 
     // ── Taurus ─────────────────────────────────────────────────────────────
-    ((4.599, 16.509),  (5.438, 28.608)),   // Aldebaran – El Nath
-    ((4.599, 16.509),  (5.627, 21.143)),   // Aldebaran – Alheka
+    ((4.599, 16.509),  (5.438, 28.608)),   // Aldebaran to El Nath
+    ((4.599, 16.509),  (5.627, 21.143)),   // Aldebaran to Alheka
 
     // ── Virgo ──────────────────────────────────────────────────────────────
-    ((13.420, -11.161), (12.694, -1.450)), // Spica      – Porrima
-    ((12.694, -1.450),  (12.926,  3.398)), // Porrima    – Auva
-    ((12.926,  3.398),  (12.694, 10.959)), // Auva       – Vindemiatrix
-    ((11.845,  1.765),  (12.694, -1.450)), // Zavijava   – Porrima
+    ((13.420, -11.161), (12.694, -1.450)), // Spica to Porrima
+    ((12.694, -1.450),  (12.926,  3.398)), // Porrima to Auva
+    ((12.926,  3.398),  (12.694, 10.959)), // Auva to Vindemiatrix
+    ((11.845,  1.765),  (12.694, -1.450)), // Zavijava to Porrima
 
     // ── Boötes ─────────────────────────────────────────────────────────────
-    ((14.261, 19.182),  (14.749, 27.074)), // Arcturus  – Nekkar
-    ((14.261, 19.182),  (14.534, 30.371)), // Arcturus  – Seginus
-    ((14.261, 19.182),  (14.530, 13.724)), // Arcturus  – Izar
-    ((14.530, 13.724),  (14.686,  16.418)), // Izar     – Muphrid
-    ((14.686, 16.418),  (14.261, 19.182)), // Muphrid  – Arcturus (close)
+    ((14.261, 19.182),  (14.749, 27.074)), // Arcturus to Nekkar
+    ((14.261, 19.182),  (14.534, 30.371)), // Arcturus to Seginus
+    ((14.261, 19.182),  (14.530, 13.724)), // Arcturus to Izar
+    ((14.530, 13.724),  (14.686,  16.418)), // Izar to Muphrid
+    ((14.686, 16.418),  (14.261, 19.182)), // Muphrid to Arcturus (close)
 
     // ── Andromeda ──────────────────────────────────────────────────────────
-    ((0.139, 29.091),  (1.162, 35.621)),   // Alpheratz – Mirach
-    ((1.162, 35.621),  (1.633, 41.406)),   // Mirach    – Almach
-    ((1.162, 35.621),  (0.655, 30.861)),   // Mirach    – Delta And
+    ((0.139, 29.091),  (1.162, 35.621)),   // Alpheratz to Mirach
+    ((1.162, 35.621),  (1.633, 41.406)),   // Mirach to Almach
+    ((1.162, 35.621),  (0.655, 30.861)),   // Mirach to Delta And
 
     // ── Pegasus (Great Square) ─────────────────────────────────────────────
-    ((0.139,  29.091), (23.079, 15.206)),  // Alpheratz – Markab
-    ((23.079, 15.206), (22.691, 10.832)), // Markab    – Sadalbari
-    ((22.691, 10.832), (23.063, 28.083)), // Sadalbari – Scheat (approx)
-    ((23.063, 28.083), (0.139,  29.091)), // Scheat    – Alpheratz
+    ((0.139,  29.091), (23.079, 15.206)),  // Alpheratz to Markab
+    ((23.079, 15.206), (22.691, 10.832)), // Markab to Sadalbari
+    ((22.691, 10.832), (23.063, 28.083)), // Sadalbari to Scheat (approx)
+    ((23.063, 28.083), (0.139,  29.091)), // Scheat to Alpheratz
 ];

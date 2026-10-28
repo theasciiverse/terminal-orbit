@@ -124,7 +124,7 @@ fn handle_cursor(
             }
             axis = (axis + 1) % 3;
         } else {
-            // Planet or object name — set cursor to its position.
+            // Planet or object name: set cursor to its position.
             if let Some(p) = world.planets.iter().position(|p| p.name.eq_ignore_ascii_case(&tok)) {
                 *cursor = world.planets[p].pos;
                 axis = 0;
@@ -136,7 +136,7 @@ fn handle_cursor(
                 *cursor = world.targets[t].pos;
                 axis = 0;
             }
-            // Unknown name — cursor unchanged (matches C behaviour).
+            // Unknown name: cursor unchanged (matches C behaviour).
         }
     }
 }
@@ -650,7 +650,7 @@ mod tests {
         )
         .expect("load_mission failed");
 
-        // Earth is the 3rd body (index 2 in our planet array — check by name).
+        // Earth is the 3rd body (index 2 in our planet array: check by name).
         let earth = world
             .planets
             .iter()

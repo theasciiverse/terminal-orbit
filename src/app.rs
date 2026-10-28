@@ -143,7 +143,7 @@ fn game_loop(term: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()
 
                 Screen::Playing => {
                     if handle_playing_event(ev, &mut input, &mut dense_stars, &mut show_orrery, &mut show_names, &mut show_texture, &mut show_lines, &mut orbit_cam, &mut orbit_shot, &mut autopilot, &mut paused, &mut world)? {
-                        // Q — save prefs and return to title.
+                        // Q: save prefs and return to title.
                         prefs.dense_stars = dense_stars;
                         write_prefs(&prefs);
                         push_save(&world.mission_file);

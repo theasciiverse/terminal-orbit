@@ -29,9 +29,9 @@ pub struct Camera {
     pub view:      Vec3,
     pub up:        Vec3,
     pub right:     Vec3,
-    /// 1 / tan(30°) — maps the vertical half-FOV (60° total) to NDC ±1.
+    /// 1 / tan(30°): maps the vertical half-FOV (60° total) to NDC ±1.
     pub fov_scale: f64,
-    /// width_dots / height_dots — braille dots are square so this is pure pixel ratio.
+    /// width_dots / height_dots: braille dots are square so this is pure pixel ratio.
     pub aspect:    f64,
     pub w_dots:    u32,
     pub h_dots:    u32,
@@ -58,7 +58,7 @@ impl Camera {
         self.project_dp(dp)
     }
 
-    /// Project a unit direction (for stars — no parallax).
+    /// Project a unit direction (for stars: no parallax).
     pub fn project_direction(&self, dir: Vec3) -> Option<(u32, u32)> {
         self.project_dp(dir)
     }

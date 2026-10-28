@@ -44,7 +44,7 @@ fn parse_tri_line(line: &str) -> Option<[Vec3; 3]> {
     let v1 = Vec3::new(f()? / 100.0, f()? / 100.0, f()? / 100.0);
     let v2 = Vec3::new(f()? / 100.0, f()? / 100.0, f()? / 100.0);
     let v3 = Vec3::new(f()? / 100.0, f()? / 100.0, f()? / 100.0);
-    // hex color token — ignored for wireframe rendering
+    // hex color token: ignored for wireframe rendering
     it.next()?;
 
     Some([v1, v2, v3])

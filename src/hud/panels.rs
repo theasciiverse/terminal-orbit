@@ -160,7 +160,7 @@ fn render_viewport(
     crate::combat::explosions::draw_missiles(&mut c_fx, &camera, world);
     crate::combat::explosions::draw_booms(&mut c_fx, &camera, world);
 
-    // Build one canvas per planet with its own color (skip in texture mode — texture covers them).
+    // Build one canvas per planet with its own color (skip in texture mode: texture covers them).
     let mut planet_canvases: Vec<(BrailleCanvas, Color)> = Vec::new();
     if !show_texture {
         for p in 0..world.planets.len() {
@@ -199,7 +199,7 @@ fn render_viewport(
 
     render_colored_layers(frame, area, &layers);
 
-    // Constellation name labels — only when both lines and names are enabled.
+    // Constellation name labels: only when both lines and names are enabled.
     if show_lines && show_names {
         render_constellation_labels(frame, area, &camera);
     }
@@ -207,7 +207,7 @@ fn render_viewport(
     // Optional texture overlay on planets.
     if show_texture {
         render_planets_textured(frame, area, world, &camera, textures);
-        // Re-stamp ship wireframe on top — the texture pass overwrites braille chars.
+        // Re-stamp ship wireframe on top: the texture pass overwrites braille chars.
         if orbit_cam {
             render_braille_direct(frame, area, &c_player, Color::Cyan);
         }
@@ -239,7 +239,7 @@ fn raycast_planet(ray_origin: Vec3, ray_dir: Vec3, center: Vec3, radius: f64) ->
 }
 
 /// Render textured planets by raycasting every viewport cell against all planet spheres.
-/// No bounding box — correct for any viewing angle, handles partial off-screen planets.
+/// No bounding box: correct for any viewing angle, handles partial off-screen planets.
 fn render_planets_textured(
     frame: &mut Frame,
     area: Rect,
@@ -627,7 +627,7 @@ fn render_stats_panel(frame: &mut Frame, area: Rect, world: &World, autopilot: A
 
 /// Overlay planet/target names on the 3D viewport using projected positions.
 fn render_3d_name_overlays(frame: &mut Frame, area: Rect, world: &World, camera: &Camera) {
-    // Planets — cyan labels.
+    // Planets: cyan labels.
     for planet in &world.planets {
         if planet.hidden || planet.radius <= 0.0 {
             continue;
@@ -649,7 +649,7 @@ fn render_3d_name_overlays(frame: &mut Frame, area: Rect, world: &World, camera:
         }
     }
 
-    // Active targets — red (enemy) or green (friendly).
+    // Active targets: red (enemy) or green (friendly).
     for target in &world.targets {
         if target.age <= 0.0 || target.hidden {
             continue;

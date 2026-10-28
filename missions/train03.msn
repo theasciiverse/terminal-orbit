@@ -52,7 +52,7 @@ Event
 	Action Message
 	Value
 	{
-		A target is nearby — look for it in the radar
+		A target is nearby; look for it in the radar
 		panel at the bottom left.\\
 		Press U to lock onto the nearest enemy.\\
 		Point your ship at the target using A/D to yaw

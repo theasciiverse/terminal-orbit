@@ -94,7 +94,7 @@ pub fn render_radar(world: &World) -> Vec<String> {
 
     let player = &world.player;
 
-    // Planets — show non-moons always; moons only when primary is close.
+    // Planets: show non-moons always; moons only when primary is close.
     for (i, p) in world.planets.iter().enumerate() {
         if p.hidden || p.radius <= 0.0 { continue; }
         if p.is_moon {
@@ -109,7 +109,7 @@ pub fn render_radar(world: &World) -> Vec<String> {
         plot(&mut grid, x, y, '·');
     }
 
-    // Targets — `+` enemy, `f` friendly. Locked target gets `X`.
+    // Targets: `+` enemy, `f` friendly. Locked target gets `X`.
     let locked = world.lock.target;
     for (i, t) in world.targets.iter().enumerate() {
         if t.age <= 0.0 || t.hidden || t.invisible { continue; }
@@ -124,14 +124,14 @@ pub fn render_radar(world: &World) -> Vec<String> {
         plot(&mut grid, x, y, ch);
     }
 
-    // Missiles — `o`.
+    // Missiles: `o`.
     for m in &world.missiles {
         if m.age <= 0.0 { continue; }
         let (x, y) = radar_coords(player, m.pos);
         plot(&mut grid, x, y, 'o');
     }
 
-    // Current waypoint — `W`.
+    // Current waypoint: `W`.
     let wp = world.player.waypoint;
     if wp < world.nwaypoints {
         let (x, y) = radar_coords(player, world.waypoints[wp].pos);

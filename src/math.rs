@@ -15,7 +15,7 @@ impl Vec3 {
         Self::new(0.0, 0.0, 0.0)
     }
 
-    /// Squared magnitude (avoids sqrt — use for distance comparisons).
+    /// Squared magnitude (avoids sqrt: use for distance comparisons).
     pub fn mag2(self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -51,7 +51,7 @@ impl Vec3 {
     }
 
     /// Find a vector perpendicular to self (Perp in util.c).
-    /// Ported verbatim — preserves the exact case logic from util.c.
+    /// Ported verbatim: preserves the exact case logic from util.c.
     #[allow(dead_code)] // util.c kernel, kept complete and tested
     pub fn perp(self) -> Self {
         let (x, y, z) = (self.x, self.y, self.z);

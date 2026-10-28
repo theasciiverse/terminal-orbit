@@ -114,7 +114,7 @@ fn parse_surf(lines: &[&str], pos: &mut usize, local_verts: &[Vec3], builder: &m
 
         if line.starts_with("mat ") {
             *pos += 1;
-            // material index — not needed for wireframe
+            // material index: not needed for wireframe
         } else if line.starts_with("refs ") {
             let n: usize = line[5..].trim().parse().unwrap_or(0);
             *pos += 1;
@@ -141,7 +141,7 @@ fn parse_surf(lines: &[&str], pos: &mut usize, local_verts: &[Vec3], builder: &m
             }
             return; // refs is the last token in a SURF block
         } else {
-            break; // unexpected line — stop
+            break; // unexpected line: stop
         }
     }
 }

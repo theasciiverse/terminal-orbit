@@ -37,7 +37,7 @@ impl ModelBuilder {
     }
 }
 
-/// Canonical key for an undirected edge — sorts the two endpoints so (A,B) == (B,A).
+/// Canonical key for an undirected edge: sorts the two endpoints so (A,B) == (B,A).
 fn edge_key(a: Vec3, b: Vec3) -> [u64; 6] {
     let key_a = [a.x.to_bits(), a.y.to_bits(), a.z.to_bits()];
     let key_b = [b.x.to_bits(), b.y.to_bits(), b.z.to_bits()];

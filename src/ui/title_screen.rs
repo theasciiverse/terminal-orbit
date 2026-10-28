@@ -21,7 +21,7 @@ const ORBIT_ART: &str = r#"   ___  ____  ____  ___  ____
  | |_| |  _ <| |_) || |   | |
   \___/|_| \_|____/|___|  |_|"#;
 
-const SUBTITLE: &str = "Space Combat Simulator — lovingly translated to TUI\n  Originally by Steve Belczyk (1999)";
+const SUBTITLE: &str = "Space Combat Simulator, lovingly translated to TUI\n  Originally by Steve Belczyk (1999)";
 
 pub const TITLE_OPTIONS: &[&str] = &["New Game", "Episode Two", "Load Game", "Quit"];
 
@@ -66,13 +66,13 @@ pub fn render_title(frame: &mut Frame, sel: usize, saves: &[SaveSlot]) {
     ])
     .split(inner);
 
-    // TERMINAL word — centered at its own width.
+    // TERMINAL word: centered at its own width.
     frame.render_widget(
         Paragraph::new(art_lines(TERMINAL_ART, Color::Cyan)).alignment(Alignment::Center),
         chunks[1],
     );
 
-    // ORBIT word — centered at its own (narrower) width.
+    // ORBIT word: centered at its own (narrower) width.
     frame.render_widget(
         Paragraph::new(art_lines(ORBIT_ART, Color::Cyan)).alignment(Alignment::Center),
         chunks[3],

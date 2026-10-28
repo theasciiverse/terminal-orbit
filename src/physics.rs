@@ -3,7 +3,7 @@ use crate::math::{rotate_about, Vec3};
 use crate::types::*;
 
 /// Compute gravity delta-v for one timestep at `pos`.
-/// Port of Gravity() from orbit.c — planets farther than 200 units are ignored.
+/// Port of Gravity() from orbit.c: planets farther than 200 units are ignored.
 pub fn gravity(planets: &[Planet], pos: Vec3) -> Vec3 {
     let mut deltav = Vec3::default();
     for p in planets {
@@ -148,7 +148,7 @@ pub fn move_player(world: &mut World) {
     world.player.shields = (world.player.shields + dt * SHIELD_REGEN).min(world.player.maxshields);
     world.player.msl_idle += dt;
 
-    let _ = was_still; // used by network code — skip for now
+    let _ = was_still; // used by network code: skip for now
 }
 
 /// Move a single target one timestep. Port of MoveTarget() from target.c.

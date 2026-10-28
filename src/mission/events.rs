@@ -182,7 +182,7 @@ pub fn fire_event(world: &mut World, e: usize) -> Option<String> {
             }
 
             EventActionKind::Flash => {
-                // Visual flash — no-op for now (Phase 5 adds explosions).
+                // Visual flash: no-op for now (Phase 5 adds explosions).
             }
         }
     }

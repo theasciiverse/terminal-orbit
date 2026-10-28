@@ -86,7 +86,7 @@ Event
 		Press Y to cycle through all targets.\\
 		Fly toward each one with W, aim with A/D and I/K,
 		and fire with SPACE.\\
-		Hold S to brake — these targets shoot back.\\
+		Hold S to brake: these targets shoot back.\\
 		Use X to toggle warp engines for quick repositioning.
 	}
 }

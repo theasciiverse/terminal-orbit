@@ -217,11 +217,11 @@ pub struct Waypoint {
 pub struct Message {
     pub text: String,
     pub age: f64,
-    /// Last message shown — survives when text clears, recalled with M key.
+    /// Last message shown: survives when text clears, recalled with M key.
     pub last_text: String,
 }
 
-/// Top-level game world — owns all mutable state.
+/// Top-level game world: owns all mutable state.
 pub struct World {
     pub player: Player,
     pub targets: Vec<Target>,

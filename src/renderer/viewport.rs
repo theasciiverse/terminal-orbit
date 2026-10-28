@@ -136,7 +136,7 @@ fn clip_near(d0: Vec3, d1: Vec3, z0: f64, z1: f64, near: f64) -> Option<(Vec3, V
     if z0 < near && z1 < near {
         return None;
     }
-    // One point behind — clip to near plane
+    // One point behind: clip to near plane
     let t = (near - z0) / (z1 - z0);
     let mid = d0 + (d1 - d0) * t;
     if z0 < near {

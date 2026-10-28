@@ -17,7 +17,7 @@ pub fn spawn_boom(world: &mut World, pos: Vec3, size: f64) {
             return;
         }
     }
-    // All slots full — overwrite the oldest.
+    // All slots full: overwrite the oldest.
     if let Some(oldest) = world.booms.iter_mut().max_by(|a, b| a.age.partial_cmp(&b.age).unwrap()) {
         oldest.pos = pos;
         oldest.age = world.delta_t.max(0.001);

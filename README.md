@@ -2,11 +2,12 @@
 
 **THE ALIENS ARE ALREADY HERE.**
 
-It started with a strange alien construction, quietly gathering energy, and
-then the alien fighters came. Fly a small starfighter through the real solar
+It started with a message from Titan Base: something alien is out in the
+Saturn system. Then the alien fighters came. Fly a small starfighter through the real solar
 system with real Newtonian physics: thrust, brake, coast, swing into orbit,
 match speeds and dock, then do it again with aliens on your tail, from the
-Earth and the Moon to Mars, Jupiter, the rings of Saturn, Neptune and Pluto.
+Earth and the Moon to the rings of Saturn, Jupiter, Neptune, Mars and a portal
+at Pluto.
 
 This is a terminal port of [ORBIT](http://genesis.nred.ma.us/orbit/), Steve
 Belczyk's 1999 freeware space combat simulator, from his own C source: the
@@ -93,17 +94,17 @@ Full `.msn` tokenizer with Include recursion, cursor-relative positioning, and t
 
 ## Campaign
 
-28 missions across 8 star systems:
+28 missions, in the order they are flown:
 
 | System | Missions |
 |--------|----------|
-| Earth orbit (training) | train01-04 |
-| Mars | mars1-5 |
-| Jupiter | jupiter1-5 |
-| Saturn | saturn01-04 |
+| Earth, the Moon and Mars (training) | train01-04 |
 | Titan / Dione | titan01-03, dione01 |
+| Saturn | saturn01-04 |
+| Jupiter | jupiter1-5 |
 | Uranus | uranus01 |
 | Neptune | neptune1-2 |
+| Mars | mars1-5, bertha1-2 |
 | Pluto | pluto1 |
 
 ### Episode Two: Open Skies
