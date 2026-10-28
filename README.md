@@ -204,5 +204,10 @@ build.rs:          parses stars.h → star_data.rs (Yale catalog)
 
 ## Credits
 
-Original ORBIT game © 1999 Steve Belczyk: released as freeware.  
+Original ORBIT game © 1999 Steve Belczyk, released under the GNU General Public License.  
 Terminal port written in Rust using [ratatui](https://github.com/ratatui/ratatui) and [drawille](https://github.com/asciimoo/drawille).
+
+## Licence
+
+GNU General Public License, version 2 or (at your option) any later version,
+as ORBIT itself; see [COPYING](COPYING).
