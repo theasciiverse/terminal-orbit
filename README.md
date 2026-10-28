@@ -23,10 +23,6 @@ av install terminal-orbit
 av play terminal-orbit
 ```
 
-Or download the archive for your system from this repository's Releases,
-unpack it and run `./terminal-orbit` from that folder (it reads the
-`missions/`, `models/` and `maps/` beside it).
-
 To build it yourself: `cargo build --release` (Rust 1.75 or newer), then run
 it from the repository folder.
 
